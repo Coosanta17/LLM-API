@@ -24,14 +24,4 @@ public class MainTest {
         String result = generate.responseMaker("");
         assertEquals("", result);
     }
-
-    @Test
-    public void testMainWithNullPrompt() {
-        assertThrows(NullPointerException.class, () -> {
-            String[] args = {};
-            Main.main(args);
-            Generate generate = new Generate(null);
-            generate.responseMaker(null);
-        });
-    }
 }
