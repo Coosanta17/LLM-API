@@ -6,6 +6,12 @@ public class Main {
     public static final String MODEL_PATH = "path/to/your/llama-model.gguf";
 
     public static void main(String[] args) throws IOException {
-        String yes = new Generate("Hello world!").responseMaker("Hello world!"); // placeholder, I will fix this!
+
+        // example config generation and reading.
+        ConfigManager configuration = new ConfigManager();
+        System.out.println("App Name: " + configuration.getProperty("app.name"));
+        configuration.setProperty("app.name", "UpdatedJavaApp");
+        System.out.println("Updated App Name: " + configuration.getProperty("app.name"));
+        System.out.println("App Version: " + configuration.getProperty("app.version"));
     }
 }
