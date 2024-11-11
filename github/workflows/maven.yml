@@ -1,0 +1,67 @@
+# This workflow will build a Java project with Maven and cache/restore dependencies to improve execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Cache Maven dependencies
+      # See: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#caching-dependencies
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # Build with Maven
+      - name: Build with Maven
+        run: mvn -B clean install
+
+      # Upload the build artifact (e.g., the JAR file)
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.3.6
+        with:
+          name: build-artifact
+          path: target/*.jar
+          if-no-files-found: warn
+          retention-days: 90
+          compression-level: 6
+          overwrite: false # controls overwriting existing files in storage
+
+  dependency-submission:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Generate and submit dependency graph for Maven
+      # See: https://github.com/github/dependency-submission-toolkit for other dependency submission methods
+      - name: Generate and submit dependency graph
+        run: mvn dependency:tree -DoutputType=dot -DoutputFile=dependency-graph.dot
+        continue-on-error: true
