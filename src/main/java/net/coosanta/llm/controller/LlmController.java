@@ -8,8 +8,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// Ignore IDE warnings about these classes, they are used and are quite important!
 @RestController
-@RequestMapping("./api")
+@RequestMapping("/api")
 public class LlmController {
 
 //    @GetMapping("/getSomething")
@@ -17,7 +18,9 @@ public class LlmController {
 //        return "something";
 //    }
 
-    @PostMapping("/prompt")
+    // curl -H "Content-Type: application/json" -d '{"prompt": "Hello world!"}' http://localhost:port/api/testPrompt
+    // You sent: Hello world!
+    @PostMapping("/testPrompt")
     public ResponseEntity<String> processPrompt(@RequestBody Prompt prompt) {
         Responder response = new Responder(prompt);
 

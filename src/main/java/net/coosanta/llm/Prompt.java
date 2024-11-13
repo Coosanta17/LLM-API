@@ -3,6 +3,10 @@ package net.coosanta.llm;
 public class Prompt {
     private String prompt;
 
+    public Prompt(){
+        // Click to add text
+    }
+
     public Prompt(String inputPromt){
         this.prompt = inputPromt;
     }
