@@ -1,7 +1,9 @@
 package net.coosanta.llm.controller;
 
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import net.coosanta.llm.Prompt;
 import net.coosanta.llm.Responder;
+import net.coosanta.llm.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,13 +20,18 @@ public class LlmController {
 //        return "something";
 //    }
 
-    // curl -H "Content-Type: application/json" -d '{"prompt": "Hello world!"}' http://localhost:port/api/testPrompt
-    // You sent: Hello world!
-    @PostMapping("/testPrompt")
-    public ResponseEntity<String> processPrompt(@RequestBody Prompt prompt) {
-        Responder response = new Responder(prompt);
+//    // curl -H "Content-Type: application/json" -d '{"prompt": "Hello world!"}' http://localhost:port/api/testPrompt
+//    // You sent: Hello world!
+//    @PostMapping("/testPrompt")
+//    public ResponseEntity<String> processPrompt(@RequestBody Prompt prompt) {
+//        Responder response = new Responder(prompt);
+//
+//        String result = response.respond();
+//        return ResponseEntity.ok(result);
+//    }
 
-        String result = response.respond();
-        return ResponseEntity.ok(result);
-    }
+//    @PostMapping("/generate")
+//    public ResponseEntity<Response> generateResponse(@RequestBody Prompt prompt) {
+//        return null; // fix
+//    }
 }

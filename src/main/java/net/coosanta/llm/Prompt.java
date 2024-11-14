@@ -2,6 +2,7 @@ package net.coosanta.llm;
 
 public class Prompt {
     private String prompt;
+    private Chat chat;
 
     public Prompt(){
         // Click to add text
@@ -13,6 +14,10 @@ public class Prompt {
 
     public String getPrompt() {
         return prompt;
+    }
+
+    public Chat getChat() {
+        return chat;
     }
 
     public void setPrompt(String prompt) {
