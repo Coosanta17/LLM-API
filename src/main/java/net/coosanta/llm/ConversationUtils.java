@@ -34,8 +34,11 @@ public class ConversationUtils {
     }
 
     public static String unformatMessage(String formattedMessage) {
-        // Strip control tokens and unnecessary whitespaces
-        return formattedMessage.replaceAll("<\\|.*?\\|>", "").trim();
+        // Use regex to extract only the content between the role headers and the end token
+        return formattedMessage
+                .replaceAll("<\\|start_header_id\\|>.*?<\\|end_header_id\\|>\n", "") // Remove role header
+                .replaceAll("<\\|eot_id\\|>", "") // Remove end-of-text token
+                .trim(); // Trim extra whitespace
     }
 }
 
