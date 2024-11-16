@@ -5,10 +5,9 @@ import net.coosanta.llm.Prompt;
 import net.coosanta.llm.Responder;
 import net.coosanta.llm.Response;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 // Ignore IDE warnings about these classes, they are used and are quite important!
 @RestController
@@ -30,8 +29,9 @@ public class LlmController {
 //        return ResponseEntity.ok(result);
 //    }
 
-//    @PostMapping("/generate")
-//    public ResponseEntity<Response> generateResponse(@RequestBody Prompt prompt) {
-//        return null; // fix
-//    }
+    @PostMapping("/generate")
+    public ResponseEntity<Response> generateResponse(@RequestBody Prompt prompt) throws IOException {
+        Responder response = new Responder();
+        return ResponseEntity.ok(response.respond());
+    }
 }

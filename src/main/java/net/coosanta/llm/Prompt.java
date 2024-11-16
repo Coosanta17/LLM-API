@@ -1,7 +1,7 @@
 package net.coosanta.llm;
 
 public class Prompt {
-    private String prompt;
+    private String content;
     private Chat chat;
 
     public Prompt(){
@@ -9,18 +9,18 @@ public class Prompt {
     }
 
     public Prompt(String inputPromt){
-        this.prompt = inputPromt;
+        this.content = inputPromt;
     }
 
-    public String getPrompt() {
-        return prompt;
+    public String getContent() {
+        return content;
     }
 
     public Chat getChat() {
         return chat;
     }
 
-    public void setPrompt(String prompt) {
-        this.prompt = prompt;
+    public void setContent(String content) {
+        this.content = content;
     }
 }

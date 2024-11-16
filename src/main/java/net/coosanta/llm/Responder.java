@@ -16,7 +16,7 @@ import static net.coosanta.llm.LlmApiApplication.MODEL_PATH;
 @SuppressWarnings("InfiniteLoopStatement")
 public class Responder {
 
-    public static void main(String[] args) throws IOException {
+    public Response respond() throws IOException {
         ModelParameters modelParams = new ModelParameters()
                 .setModelFilePath(MODEL_PATH)
                 /*.setNGpuLayers(43)*/

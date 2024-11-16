@@ -7,8 +7,8 @@ public class Response {
 
     public Response(){}
 
-    public Response(String input, String inPromt) {
-        this.response = input;
+    public Response(String inResponse, String inPromt) {
+        this.response = inResponse;
         this.prompt = inPromt;
 
         id = generateID();
