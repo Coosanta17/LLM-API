@@ -125,9 +125,7 @@ import de.kherud.llama.args.MiroStat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -197,14 +195,14 @@ public class LlamaApp {
 
             Stream<String> modelResponseStream = getModelResponse(model, inferenceParameters);
 
-            List<String> responseList = new ArrayList<>();
-            Consumer<String> livePrinter = s -> { // This shit is confusing man wtf bro
+            StringBuilder responseBuilder = new StringBuilder();
+            Consumer<String> livePrinter = s -> { // Everything done here is against best practices, but it works ok?
                 System.out.print(s);
-                responseList.add(s);
+                responseBuilder.append(s);
             };
 
             modelResponseStream.forEach(livePrinter);
-            String concatenatedResponse = String.join("", responseList);
+            String concatenatedResponse = responseBuilder.toString();
 
             System.out.println("Assistant: " + unformatMessage(concatenatedResponse));
             System.out.println("Assistant (debug): " + inferenceParameters);
