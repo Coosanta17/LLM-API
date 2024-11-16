@@ -1,13 +1,8 @@
 package net.coosanta.llm.controller;
 
-import com.fasterxml.jackson.databind.util.JSONPObject;
-import net.coosanta.llm.Prompt;
-import net.coosanta.llm.Responder;
-import net.coosanta.llm.Response;
+import net.coosanta.llm.LlamaApp;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
 
 // Ignore IDE warnings about these classes, they are used and are quite important!
 @RestController
@@ -30,8 +25,8 @@ public class LlmController {
 //    }
 
     @PostMapping("/generate")
-    public ResponseEntity<Response> generateResponse(@RequestBody Prompt prompt) throws IOException {
-        Responder response = new Responder();
-        return ResponseEntity.ok(response.respond());
+    public ResponseEntity<LlamaApp> generateResponse(@RequestBody String prompt) {
+        LlamaApp llamaApp = new LlamaApp(prompt);
+        return ResponseEntity.ok(llamaApp);
     }
 }
