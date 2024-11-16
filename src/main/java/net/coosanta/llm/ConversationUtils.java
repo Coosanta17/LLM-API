@@ -34,11 +34,8 @@ public class ConversationUtils {
     }
 
     public static String unformatMessage(String formattedMessage) {
-        String[] parts = formattedMessage.split("<\\|end_header_id\\|>\\n|<\\|eot_id\\|>\\n\\n");
-        if (parts.length >= 2) {
-            return parts[1].trim();
-        }
-        return "";
+        // Strip control tokens and unnecessary whitespaces
+        return formattedMessage.replaceAll("<\\|.*?\\|>", "").trim();
     }
 }
 

@@ -167,7 +167,7 @@ public class LlamaApp {
         ModelParameters modelParams = initializeModel();
         LlamaModel model = new LlamaModel(modelParams);
 
-        String context = generateContext(conversation);
+        StringBuilder context = new StringBuilder(generateContext(conversation));
 
         while (true) {
             System.out.print("User: ");
@@ -185,9 +185,9 @@ public class LlamaApp {
 
             // Adds user prompt to conversation and sends it to model
             conversation.addMessage("user", userInput);
+            context.append(formatMessage("User", userInput));
 
-            // Get the model's response and add it to conversation
-            InferenceParameters inferenceParameters = new InferenceParameters(context + formatMessage("user", userInput))
+            InferenceParameters inferenceParameters = new InferenceParameters(context.toString())
                     .setTemperature(0.7f)
                     .setPenalizeNl(true)
                     .setMiroStat(MiroStat.V2)
@@ -202,12 +202,14 @@ public class LlamaApp {
             };
 
             modelResponseStream.forEach(livePrinter);
-            String concatenatedResponse = responseBuilder.toString();
+            String rawResponse = responseBuilder.toString();
 
-            System.out.println("Assistant: " + unformatMessage(concatenatedResponse));
-            System.out.println("Assistant (debug): " + inferenceParameters);
+            String cleanedResponse = unformatMessage(rawResponse).trim();
 
-            conversation.addMessage("assistant", unformatMessage(concatenatedResponse));
+            conversation.addMessage("assistant", cleanedResponse);
+            context.append(formatMessage("assistant", cleanedResponse));
+
+            System.out.println("\nAssistant: " + cleanedResponse);
         }
 
         scanner.close();
