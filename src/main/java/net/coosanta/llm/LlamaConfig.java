@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "app")
 public class LlamaConfig {
-    ModelConfig model = new ModelConfig();
+    private ModelConfig model = new ModelConfig();
 
     public static class ModelConfig {
         private String path;
@@ -15,22 +15,21 @@ public class LlamaConfig {
         private String seed;
         private int gpuLayers;
 
-        private int seedNum;
-
-        ModelConfig() {
+        private int findSeed(String inSeed) {
+            int seedNum;
             if (seed.matches("^[0-9]*$")) {
                 try {
-                    seedNum = Integer.parseInt(seed);
+                    seedNum = Integer.parseInt(inSeed);
                 } catch (NumberFormatException e) {
                     System.err.println("Error reading seed from configuration - Unable to parse number");
                     throw new RuntimeException(e);
                 }
-            } else if (seed.equals("RANDOM")){
-                seedNum = (int)Math.floor(Math.random()*Integer.MAX_VALUE);
-                // IDK how to set default, so I made my own random seed generator.
+            } else if (inSeed.equals("RANDOM")) {
+                seedNum = (int) Math.floor(Math.random() * Integer.MAX_VALUE);
             } else {
                 throw new RuntimeException("Error reading seed from configuration - Invalid option");
             }
+            return seedNum;
         }
 
         public String getPath() {
@@ -46,7 +45,7 @@ public class LlamaConfig {
         }
 
         public int getSeed() {
-            return this.seedNum;
+            return findSeed(seed);
         }
 
         public int getGpuLayers() {
