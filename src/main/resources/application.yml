@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: LLM-API
+
+app:
+  model:
+    # Path to the gguf file. Uses placeholder llama.gguf for now.
+    path: ./models/llama.gguf
+
+    # How much "memory" the model has.
+    # Higher number will result in the model being able to
+    # remember more of the conversation but will use more RAM.
+    # Llama.cpp default 512 (model might be a bit forgetful).
+    # Set to 0 to load model default (might use too much ram)
+    context: 2048
+
+    # How many threads the model uses. The more threads the faster
+    # the model responds. However, this can result in other
+    # applications being impacted due to less resources.
+    threads: 6
+
+    # Seed to use for RNG. The same seed will produce similar responses
+    # Set as `RANDOM` for random seed.
+    seed: RANDOM
+
+    # Set the number of layers to store in VRAM (default: -1)
+    gpu-layers: -1
+
+    # more setting to come!

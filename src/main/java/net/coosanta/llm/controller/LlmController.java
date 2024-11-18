@@ -1,6 +1,7 @@
 package net.coosanta.llm.controller;
 
 import net.coosanta.llm.LlamaApp;
+import net.coosanta.llm.LlamaConfig;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,6 +9,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api")
 public class LlmController {
+    public final LlamaConfig llamaConfig;
+
+    public LlmController(LlamaConfig llamaConfig) {
+        this.llamaConfig = llamaConfig;
+    }
 
 //    @GetMapping("/getSomething")
 //    public String getSomething() {
@@ -26,7 +32,7 @@ public class LlmController {
 
     @PostMapping("/generate")
     public ResponseEntity<LlamaApp> generateResponse(@RequestBody String prompt) {
-        LlamaApp llamaApp = new LlamaApp(prompt);
+        LlamaApp llamaApp = new LlamaApp(prompt, llamaConfig);
         return ResponseEntity.ok(llamaApp);
     }
 }
