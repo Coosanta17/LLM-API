@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "app")
 public class LlamaConfig {
-    ModelConfig model;
+    ModelConfig model = new ModelConfig();
 
     public static class ModelConfig {
         private String path;
