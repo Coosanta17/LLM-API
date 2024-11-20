@@ -18,20 +18,40 @@ public class LlamaConfig {
             return this.path;
         }
 
+        public void setPath(String path) {
+            this.path = path;
+        }
+
         public int getContext() {
             return this.context;
+        }
+
+        public void setContext(int context) {
+            this.context = context;
         }
 
         public int getThreads() {
             return this.threads;
         }
 
+        public void setThreads(int threads) {
+            this.threads = threads;
+        }
+
         public int getGpuLayers() {
             return this.gpuLayers;
+        }
+
+        public void setGpuLayers(int gpuLayers) {
+            this.gpuLayers = gpuLayers;
         }
     }
 
     public ModelConfig getModelSettings() {
         return model;
+    }
+
+    public void setModel(ModelConfig model) {
+        this.model = model;
     }
 }

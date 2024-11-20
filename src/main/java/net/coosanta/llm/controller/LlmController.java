@@ -30,6 +30,8 @@ public class LlmController {
 //        return ResponseEntity.ok(result);
 //    }
 
+    // PowerShell: Invoke-RestMethod -Uri "http://localhost:8080/api/generate" -Method Post -Headers @{ "Content-Type" = "application/json" } -Body '"You are a helpful and knowledgeable assistant."'
+    // Bash: curl -H "Content-Type: application/json" -d 'You are a helpful and knowledgeable assistant.' http://localhost:8080/api/generate
     @PostMapping("/generate")
     public ResponseEntity<LlamaApp> generateResponse(@RequestBody String prompt) {
         LlamaApp llamaApp = new LlamaApp(prompt, llamaConfig);
