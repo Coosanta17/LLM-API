@@ -106,8 +106,7 @@ public class LlamaApp {
                 .setModelFilePath(settings.getModelSettings().getPath())
                 .setNGpuLayers(settings.getModelSettings().getGpuLayers())
                 .setNCtx(settings.getModelSettings().getContext())
-                .setNThreads(settings.getModelSettings().getThreads())
-                .setSeed(settings.getModelSettings().getSeed());
+                .setNThreads(settings.getModelSettings().getThreads());
 
         return new LlamaModel(modelParams);
     }
