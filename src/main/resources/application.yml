@@ -22,10 +22,6 @@ app:
     # applications being impacted due to less resources.
     threads: 6
 
-    # Seed to use for RNG. The same seed will produce similar responses
-    # Set as `RANDOM` for random seed.
-    seed: RANDOM
-
     # Set the number of layers to store in VRAM (default: -1)
     gpu-layers: -1
 

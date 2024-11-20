@@ -12,25 +12,7 @@ public class LlamaConfig {
         private String path;
         private int context;
         private int threads;
-        private String seed;
         private int gpuLayers;
-
-        private int findSeed(String inSeed) {
-            int seedNum;
-            if (seed.matches("^[0-9]*$")) {
-                try {
-                    seedNum = Integer.parseInt(inSeed);
-                } catch (NumberFormatException e) {
-                    System.err.println("Error reading seed from configuration - Unable to parse number");
-                    throw new RuntimeException(e);
-                }
-            } else if (inSeed.equals("RANDOM")) {
-                seedNum = (int) Math.floor(Math.random() * Integer.MAX_VALUE);
-            } else {
-                throw new RuntimeException("Error reading seed from configuration - Invalid option");
-            }
-            return seedNum;
-        }
 
         public String getPath() {
             return this.path;
@@ -42,10 +24,6 @@ public class LlamaConfig {
 
         public int getThreads() {
             return this.threads;
-        }
-
-        public int getSeed() {
-            return findSeed(seed);
         }
 
         public int getGpuLayers() {
