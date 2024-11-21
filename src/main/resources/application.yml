@@ -22,7 +22,7 @@ app:
     # applications being impacted due to less resources.
     threads: 6
 
-    # Set the number of layers to store in VRAM (default: -1)
+    # Set the number of layers to store in VRAM (use default: -1)
     gpu-layers: -1
 
     # more setting to come!
