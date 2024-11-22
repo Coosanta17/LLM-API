@@ -33,29 +33,40 @@ public class LlmController {
         return ResponseEntity.ok(response);
     }
 
-    // Invoke-RestMethod -Uri "http://localhost:8080/api/chat" -Method Post -Headers @{ "Content-Type" = "application/json" } -Body '{"id": "<uuid>", "prompt": "<prompt>"}'
-    // curl -H "Content-Type: application/json" -d '{"id": "<uuid>", "prompt": "<prompt>"}' http://localhost:8080/api/chat
+    // Powershell: Invoke-RestMethod -Uri "http://localhost:8080/api/chat" -Method Post -Headers @{ "Content-Type" = "application/json" } -Body '{"id": "<uuid>", "prompt": "<prompt>"}'
+    // Bash: curl -H "Content-Type: application/json" -d '{"id": "<uuid>", "prompt": "<prompt>"}' http://localhost:8080/api/chat
     @PostMapping("/chat")
-    public SseEmitter generateResponse(@RequestBody ChatRequest chatRequest) throws IOException {
+    public ResponseEntity<SseEmitter> generateResponse(@RequestBody ChatRequest chatRequest) {
         SseEmitter emitter = new SseEmitter();
-        UUID conversationId = null;
+        UUID conversationId;
 
         try {
             conversationId = UUID.fromString(chatRequest.id());
         } catch (IllegalArgumentException e) {
-            emitter.completeWithError(e);
+            emitter.completeWithError(new RuntimeException("Invalid UUID format"));
+            return ResponseEntity.badRequest().body(emitter);
         }
 
-        LlamaApp llamaApp = new LlamaApp(conversationId, chatRequest.prompt(), llamaConfig, data -> {
+        try {
+            LlamaApp llamaApp = new LlamaApp(conversationId, chatRequest.prompt(), llamaConfig, data -> {
+                try {
+                    emitter.send(data);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    emitter.completeWithError(e);
+                }
+            });
+        } catch (IOException e) {
             try {
-                emitter.send(data);
-            } catch (IOException e) {
-                e.printStackTrace();
-                emitter.completeWithError(e);
+                emitter.send(SseEmitter.event().data("Conversation does not exist").name("error"));
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
             }
-        });
+            emitter.completeWithError(new RuntimeException("Conversation does not exist"));
+            return ResponseEntity.status(404).body(emitter);
+        }
 
-        return emitter;
+        return ResponseEntity.ok(emitter);
     }
 
 }

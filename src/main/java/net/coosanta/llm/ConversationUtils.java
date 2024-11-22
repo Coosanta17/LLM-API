@@ -20,6 +20,7 @@ public class ConversationUtils {
     }
 
     public static void saveToFile(Conversation conversation, Path filePath) throws IOException {
+        Files.createDirectories(filePath.getParent());
         String json = toJson(conversation);
         Files.writeString(filePath, json);
     }
