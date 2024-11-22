@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+// Static methods to do actions to conversations.
 public class ConversationUtils {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 

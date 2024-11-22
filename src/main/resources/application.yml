@@ -1,4 +1,5 @@
 server:
+  # Port to run api from
   port: 8080
 
 spring:
@@ -6,8 +7,12 @@ spring:
     name: LLM-API
 
 app:
+  # File path where conversations are stored relative to project root.
+  conversation-path: ./conversations/
+
+
   model:
-    # Path to the gguf file. Uses placeholder llama.gguf for now.
+    # Path to the gguf file relative to project root. Uses placeholder llama.gguf for now.
     path: ./models/llama.gguf
 
     # How much "memory" the model has.

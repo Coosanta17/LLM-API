@@ -7,96 +7,59 @@ import de.kherud.llama.ModelParameters;
 import de.kherud.llama.args.MiroStat;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
-import java.util.Scanner;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static net.coosanta.llm.ConversationUtils.formatMessage;
 import static net.coosanta.llm.ConversationUtils.unformatMessage;
-import static net.coosanta.llm.LlmApiApplication.CONVERSATION_PATH;
 
 public class LlamaApp {
     private final LlamaConfig settings;
+    private final Consumer<String> responseConsumer;
+    private final String prompt;
+    private final Path savePath;
 
-    public LlamaApp(String systemPrompt, LlamaConfig settings) {
+    public LlamaApp(UUID conversationUuid, String inPrompt, LlamaConfig settings, Consumer<String> responseConsumer) throws IOException {
         this.settings = settings;
-        //String systemPrompt = "You are a helpful and knowledgeable assistant.";
+        this.responseConsumer = responseConsumer;
+        this.prompt = inPrompt;
+        this.savePath = Path.of(settings.getConversationPath() + "/" + conversationUuid + ".json");
 
-        Path savePath = Path.of(CONVERSATION_PATH);
-        Conversation conversation;
-
-        // Load the conversation from the file if it exists
-        if (Files.exists(savePath)) {
-            try {
-                conversation = ConversationUtils.loadFromFile(savePath);
-                System.out.println("Loaded previous conversation.");
-            } catch (IOException e) {
-                System.out.println("Unable to read previous conversation!");
-                e.printStackTrace();
-                conversation = new Conversation(systemPrompt);
-            }
-        } else {
-            conversation = new Conversation(systemPrompt);
-        }
-
-        runConversation(conversation, savePath);
+        Conversation conversation = ConversationUtils.loadFromFile(savePath);
+        runConversation(conversation);
     }
 
-    private void runConversation(Conversation conversation, Path savePath) {
-        Scanner scanner = new Scanner(System.in);
-
+    private void runConversation(Conversation conversation) throws IOException {
         LlamaModel model = initializeModel();
 
-        StringBuilder context = new StringBuilder(generateContext(conversation));
+        conversation.addMessage("User", prompt);
 
-        while (true) {
-            System.out.print("User: ");
-            String userInput = scanner.nextLine();
+        InferenceParameters inferenceParameters = new InferenceParameters(generateContext(conversation))
+                .setTemperature(0.7f)
+                .setPenalizeNl(true)
+                .setMiroStat(MiroStat.V2)
+                .setStopStrings("<|eot_id|>");
 
-            if ("exit".equalsIgnoreCase(userInput)) { // improve
-                System.out.println("Saving conversation...");
-                try {
-                    ConversationUtils.saveToFile(conversation, savePath);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
-            }
+        Stream<String> modelResponseStream = getModelResponse(model, inferenceParameters);
 
-            // Adds user prompt to conversation and sends it to model
-            conversation.addMessage("user", userInput);
-            context.append(formatMessage("User", userInput));
+        StringBuilder responseBuilder = new StringBuilder();
+        Consumer<String> livePrinter = s -> {
+            responseConsumer.accept(s);
+            responseBuilder.append(s);
+        };
 
-            InferenceParameters inferenceParameters = new InferenceParameters(context.toString())
-                    .setTemperature(0.7f)
-                    .setPenalizeNl(true)
-                    .setMiroStat(MiroStat.V2)
-                    .setStopStrings("<|eot_id|>");
+        modelResponseStream.forEach(livePrinter);
+        String rawResponse = responseBuilder.toString();
 
-            Stream<String> modelResponseStream = getModelResponse(model, inferenceParameters);
+        String cleanedResponse = unformatMessage(rawResponse).trim();
 
-            StringBuilder responseBuilder = new StringBuilder();
-            Consumer<String> livePrinter = s -> { // Everything done here is against best practices, but it works ok?
-                System.out.print(s);
-                responseBuilder.append(s);
-            };
+        conversation.addMessage("Assistant", cleanedResponse);
 
-            modelResponseStream.forEach(livePrinter);
-            String rawResponse = responseBuilder.toString();
-
-            String cleanedResponse = unformatMessage(rawResponse).trim();
-
-            conversation.addMessage("assistant", cleanedResponse);
-            context.append(formatMessage("assistant", cleanedResponse));
-
-            System.out.println("\nAssistant: " + cleanedResponse);
-        }
-
-        scanner.close();
+        ConversationUtils.saveToFile(conversation, savePath);
     }
 
 

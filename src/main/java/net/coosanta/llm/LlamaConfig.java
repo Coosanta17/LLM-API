@@ -6,7 +6,17 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "app")
 public class LlamaConfig {
+    private String conversationPath;
     private ModelConfig model = new ModelConfig();
+
+    public String getConversationPath() {
+        // Removes trailing slashes if any
+        return this.conversationPath != null ? this.conversationPath.replaceAll("/+$", "") : null;
+    }
+
+    public void setConversationPath(String conversationPath) {
+        this.conversationPath = conversationPath;
+    }
 
     public static class ModelConfig {
         private String path;
