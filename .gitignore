@@ -36,4 +36,4 @@ build/
 ### LLM ###
 *.gguf
 
-*.json
+./conversations/*

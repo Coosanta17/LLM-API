@@ -13,7 +13,7 @@ app:
 
   model:
     # Path to the gguf file relative to project root. Uses placeholder llama.gguf for now.
-    path: ./models/luna.gguf
+    path: ./models/llama.gguf
 
     # How much "memory" the model has.
     # Higher number will result in the model being able to
