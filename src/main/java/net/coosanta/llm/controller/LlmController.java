@@ -76,26 +76,30 @@ public class LlmController {
     }
 
 
+
     private void handleBuffering(int bufferConfig, UUID conversationId, String prompt, SseEmitter emitter) throws IOException {
         if (bufferConfig == 0) {
-            // Not Buffered (live-streamed): send each token as it arrives
+            // No buffer: send each token as it arrives
             new LlamaApp(conversationId, prompt, llamaConfig, data -> sendData(emitter, data));
         } else if (bufferConfig > 0) {
-            // Buffered streaming: send data in chunks
+            // Buffered: send data in chunks
             StringBuilder buffer = new StringBuilder();
             new LlamaApp(conversationId, prompt, llamaConfig, data -> {
-                buffer.append(data).append(" ");
-                if (buffer.length() >= bufferConfig) {
-                    sendData(emitter, buffer.toString().trim());
-                    buffer.setLength(0);
+                synchronized (buffer) {
+                    buffer.append(data).append(" ");
+                    if (buffer.length() >= bufferConfig) {
+                        sendData(emitter, buffer.toString().trim());
+                        buffer.setLength(0); // Clear the buffer
+                    }
                 }
             });
 
-            // Final flush for any remaining data in buffer
-            if (!buffer.isEmpty()) {
-                sendData(emitter, buffer.toString().trim());
+            // Final flush after the model completes
+            synchronized (buffer) {
+                if (!buffer.isEmpty()) {
+                    sendData(emitter, buffer.toString().trim());
+                }
             }
-
         } else {
             // Fully buffered: send response after completion
             StringBuilder fullResponse = new StringBuilder();
@@ -103,6 +107,7 @@ public class LlmController {
             sendData(emitter, fullResponse.toString().trim());
         }
     }
+
 
 
     private void sendData(SseEmitter emitter, String data) {
