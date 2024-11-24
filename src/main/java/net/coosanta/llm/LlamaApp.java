@@ -46,14 +46,18 @@ public class LlamaApp {
 
         Stream<String> modelResponseStream = getModelResponse(model, inferenceParameters);
 
-        StringBuilder responseBuilder = new StringBuilder();
-        Consumer<String> livePrinter = s -> {
-            responseConsumer.accept(s);
-            responseBuilder.append(s);
-        };
+        try {
+            // Send each part of the response live
+            modelResponseStream.forEach(responseConsumer);
+        } catch (Exception e) {
+            throw new IOException("Error during response streaming", e);
+        }
 
-        modelResponseStream.forEach(livePrinter);
-        String rawResponse = responseBuilder.toString();
+        responseConsumer.accept("[DONE]");
+
+        String rawResponse = conversation.getMessages().stream()
+                .map(Message::content)
+                .reduce("", (acc, msg) -> acc + msg);
 
         String cleanedResponse = unformatMessage(rawResponse).trim();
 
@@ -61,8 +65,6 @@ public class LlamaApp {
 
         ConversationUtils.saveToFile(conversation, savePath);
     }
-
-
 
     private LlamaModel initializeModel() {
         ModelParameters modelParams = new ModelParameters()

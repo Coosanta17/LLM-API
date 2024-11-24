@@ -47,26 +47,30 @@ public class LlmController {
             return ResponseEntity.badRequest().body(emitter);
         }
 
-        try {
-            LlamaApp llamaApp = new LlamaApp(conversationId, chatRequest.prompt(), llamaConfig, data -> {
-                try {
-                    emitter.send(data);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    emitter.completeWithError(e);
-                }
-            });
-        } catch (IOException e) {
+        new Thread(() -> {
             try {
-                emitter.send(SseEmitter.event().data("Conversation does not exist").name("error"));
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
+                LlamaApp llamaApp = new LlamaApp(conversationId, chatRequest.prompt(), llamaConfig, data -> {
+                    try {
+                        // Send each piece of data as it comes
+                        emitter.send(SseEmitter.event().data(data));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        emitter.completeWithError(e);
+                    }
+                });
+                emitter.complete();
+            } catch (IOException e) {
+                try {
+                    emitter.send(SseEmitter.event().data("Conversation does not exist").name("error"));
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+                emitter.completeWithError(new RuntimeException("Conversation does not exist"));
             }
-            emitter.completeWithError(new RuntimeException("Conversation does not exist"));
-            return ResponseEntity.status(404).body(emitter);
-        }
+        }).start();
 
         return ResponseEntity.ok(emitter);
     }
+
 
 }
