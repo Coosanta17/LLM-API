@@ -45,9 +45,23 @@ public class LlamaApp {
                 .setMiroStat(MiroStat.V2)
                 .setStopStrings("<|eot_id|>");
 
-        return getModelResponse(model, inferenceParameters)
-                .doOnNext(responseConsumer) // Stream to consumer
-                .doOnComplete(() -> completeAndClean(new StringBuilder()));
+        return Flux.create(sink -> {
+            try {
+                getModelResponse(model, inferenceParameters)
+                        .doOnNext(data -> {
+                            responseConsumer.accept(data); // Log or process the response
+                            sink.next(data);               // Push to API stream
+                        })
+                        .doOnComplete(() -> {
+                            completeAndClean(new StringBuilder());
+                            sink.complete();
+                        })
+                        .doOnError(sink::error) // Forward errors
+                        .subscribe();
+            } catch (Exception e) {
+                sink.error(e);
+            }
+        });
     }
 
     private void completeAndClean(StringBuilder responseBuilder) {
