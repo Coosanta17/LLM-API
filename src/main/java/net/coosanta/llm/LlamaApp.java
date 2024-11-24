@@ -53,8 +53,6 @@ public class LlamaApp {
             throw new IOException("Error during response streaming", e);
         }
 
-        responseConsumer.accept("[DONE]");
-
         String rawResponse = conversation.getMessages().stream()
                 .map(Message::content)
                 .reduce("", (acc, msg) -> acc + msg);
