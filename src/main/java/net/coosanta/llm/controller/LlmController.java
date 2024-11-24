@@ -64,24 +64,24 @@ public class LlmController {
 
                 handleBuffering(bufferConfig, conversationId, chatRequest.prompt(), emitter);
 
-                emitter.send(SseEmitter.event().data("[DONE]"));
             } catch (IllegalArgumentException e) {
                 handleError(emitter, "Invalid UUID format", e);
             } catch (IOException e) {
                 handleError(emitter, "Conversation does not exist", e);
             } finally {
+                sendData(emitter, "[DONE]");
                 emitter.complete();
             }
         };
     }
 
+
     private void handleBuffering(int bufferConfig, UUID conversationId, String prompt, SseEmitter emitter) throws IOException {
         if (bufferConfig == 0) {
-            // No buffer: stream each token
+            // Not Buffered (live-streamed): send each token as it arrives
             new LlamaApp(conversationId, prompt, llamaConfig, data -> sendData(emitter, data));
-
         } else if (bufferConfig > 0) {
-            // Buffered: send data in configured chunks
+            // Buffered streaming: send data in chunks
             StringBuilder buffer = new StringBuilder();
             new LlamaApp(conversationId, prompt, llamaConfig, data -> {
                 buffer.append(data).append(" ");
@@ -90,6 +90,8 @@ public class LlmController {
                     buffer.setLength(0);
                 }
             });
+
+            // Final flush for any remaining data in buffer
             if (!buffer.isEmpty()) {
                 sendData(emitter, buffer.toString().trim());
             }
@@ -102,11 +104,15 @@ public class LlmController {
         }
     }
 
+
     private void sendData(SseEmitter emitter, String data) {
         try {
-            emitter.send(SseEmitter.event().data(data));
+            if (!data.isEmpty()) {
+                emitter.send(SseEmitter.event().data(data));
+                System.out.println("Sent: " + data);
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error sending data: " + e.getMessage());
             emitter.completeWithError(e);
         }
     }
