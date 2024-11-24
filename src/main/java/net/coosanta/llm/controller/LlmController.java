@@ -40,7 +40,7 @@ public class LlmController {
     @PostMapping("/chat")
     public ResponseEntity<SseEmitter> generateResponse(@RequestBody ChatRequest chatRequest) {
         SseEmitter emitter = new SseEmitter((long) 60*60); // 1 hour timeout
-        final boolean[] isCompleted = {false};
+        final boolean[] isCompleted = {false}; // Why?? My ide told me to.
 
         emitter.onTimeout(() -> {
             System.err.println("SSE Timeout at " + DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss").format(LocalDateTime.now()) + "!!!!!!!");
