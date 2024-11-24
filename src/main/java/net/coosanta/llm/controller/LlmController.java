@@ -4,6 +4,7 @@ import net.coosanta.llm.ChatRequest;
 import net.coosanta.llm.Conversation;
 import net.coosanta.llm.LlamaApp;
 import net.coosanta.llm.LlamaConfig;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -35,48 +36,99 @@ public class LlmController {
         return ResponseEntity.ok(response);
     }
 
-    // Powershell: Invoke-RestMethod -Uri "http://localhost:8080/api/chat" -Method Post -Headers @{ "Content-Type" = "application/json" } -Body '{"id": "<uuid>", "prompt": "<prompt>"}'
-    // Bash: curl -H "Content-Type: application/json" -d '{"id": "<uuid>", "prompt": "<prompt>"}' http://localhost:8080/api/chat
+    // Bash: curl -H "Content-Type: application/json" -d '{"id": "<uuid>", "prompt": "<prompt>", "buffer": <see readme>}' http://localhost:8080/api/chat
+    // Powershell: Invoke-RestMethod -Uri "http://localhost:8080/api/chat" -Method Post -Headers @{ "Content-Type" = "application/json" } -Body '{"id": "<uuid>", "prompt": "<prompt>", "buffer": <see readme>}'
     @PostMapping("/chat")
     public ResponseEntity<SseEmitter> generateResponse(@RequestBody ChatRequest chatRequest) {
-        SseEmitter emitter = new SseEmitter((long) 60*60); // 1 hour timeout
+        SseEmitter emitter = new SseEmitter((long) 60 * 60 * 1000); // 1-hour timeout
 
         emitter.onTimeout(() -> {
-            System.err.println("SSE Timeout at " + DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss").format(LocalDateTime.now()) + "!!!!!!!");
+            System.err.println("SSE Timeout at " + DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss").format(LocalDateTime.now()));
             emitter.complete();
         });
 
-        //emitter.onCompletion(() -> System.out.println("SSE Completed"));
-
-        new Thread(() -> {
-            try {
-                UUID conversationId = UUID.fromString(chatRequest.id());
-                LlamaApp llamaApp = new LlamaApp(conversationId, chatRequest.prompt(), llamaConfig, data -> {
-                    try {
-                        emitter.send(SseEmitter.event().data(data));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        emitter.completeWithError(e);
-                    }
-                });
-                emitter.send(SseEmitter.event().data("[DONE]"));
-            } catch (IllegalArgumentException e) {
-                emitter.completeWithError(new RuntimeException("Invalid UUID format"));
-            } catch (IOException e) {
-                try {
-                    emitter.send(SseEmitter.event().data("Conversation does not exist").name("error"));
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-                emitter.completeWithError(e);
-            } finally {
-                emitter.complete();
-            }
-        }).start();
+        new Thread(streamResponse(chatRequest, emitter)).start();
 
         return ResponseEntity.ok(emitter);
     }
 
+    // Helper methods:
 
+    private @NotNull Runnable streamResponse(ChatRequest chatRequest, SseEmitter emitter) {
+        return () -> {
+            try {
+                UUID conversationId = UUID.fromString(chatRequest.id());
+                int bufferConfig = chatRequest.buffer() != null
+                        ? chatRequest.buffer()
+                        : llamaConfig.getBuffer();
+
+                handleBuffering(bufferConfig, conversationId, chatRequest.prompt(), emitter);
+
+            } catch (IllegalArgumentException e) {
+                handleError(emitter, "Invalid UUID format", e);
+            } catch (IOException e) {
+                handleError(emitter, "Conversation does not exist", e);
+            } finally {
+                sendData(emitter, "[DONE]");
+                emitter.complete();
+            }
+        };
+    }
+
+
+
+    private void handleBuffering(int bufferConfig, UUID conversationId, String prompt, SseEmitter emitter) throws IOException {
+        if (bufferConfig == 0) {
+            // No buffer: send each token as it arrives
+            new LlamaApp(conversationId, prompt, llamaConfig, data -> sendData(emitter, data));
+        } else if (bufferConfig > 0) {
+            // Buffered: send data in chunks
+            StringBuilder buffer = new StringBuilder();
+            new LlamaApp(conversationId, prompt, llamaConfig, data -> {
+                synchronized (buffer) {
+                    buffer.append(data).append(" ");
+                    if (buffer.length() >= bufferConfig) {
+                        sendData(emitter, buffer.toString().trim());
+                        buffer.setLength(0); // Clear the buffer
+                    }
+                }
+            });
+
+            // Final flush after the model completes
+            synchronized (buffer) {
+                if (!buffer.isEmpty()) {
+                    sendData(emitter, buffer.toString().trim());
+                }
+            }
+        } else {
+            // Fully buffered: send response after completion
+            StringBuilder fullResponse = new StringBuilder();
+            new LlamaApp(conversationId, prompt, llamaConfig, fullResponse::append);
+            sendData(emitter, fullResponse.toString().trim());
+        }
+    }
+
+
+
+    private void sendData(SseEmitter emitter, String data) {
+        try {
+            if (!data.isEmpty()) {
+                emitter.send(SseEmitter.event().data(data));
+                System.out.println("Sent: " + data);
+            }
+        } catch (IOException e) {
+            System.err.println("Error sending data: " + e.getMessage());
+            emitter.completeWithError(e);
+        }
+    }
+
+    private void handleError(SseEmitter emitter, String message, Exception e) {
+        try {
+            emitter.send(SseEmitter.event().data(message).name("error"));
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+        emitter.completeWithError(e);
+    }
 
 }
