@@ -40,37 +40,50 @@ public class LlmController {
     @PostMapping("/chat")
     public ResponseEntity<SseEmitter> generateResponse(@RequestBody ChatRequest chatRequest) {
         SseEmitter emitter = new SseEmitter((long) 60*60); // 1 hour timeout
+        final boolean[] isCompleted = {false};
 
         emitter.onTimeout(() -> {
             System.err.println("SSE Timeout at " + DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss").format(LocalDateTime.now()) + "!!!!!!!");
+            isCompleted[0] = true;
             emitter.complete();
         });
-
-        //emitter.onCompletion(() -> System.out.println("SSE Completed"));
 
         new Thread(() -> {
             try {
                 UUID conversationId = UUID.fromString(chatRequest.id());
                 new LlamaApp(conversationId, chatRequest.prompt(), llamaConfig, data -> {
                     try {
-                        emitter.send(SseEmitter.event().data(data));
+                        if (!isCompleted[0]) {
+                            emitter.send(SseEmitter.event().data(data));
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
+                        isCompleted[0] = true;
                         emitter.completeWithError(e);
                     }
                 });
-                emitter.send(SseEmitter.event().data("[DONE]"));
+                if (!isCompleted[0]) {
+                    emitter.send(SseEmitter.event().data("[DONE]"));
+                }
             } catch (IllegalArgumentException e) {
-                emitter.completeWithError(new RuntimeException("Invalid UUID format"));
+                if (!isCompleted[0]) {
+                    emitter.completeWithError(new RuntimeException("Invalid UUID format"));
+                }
             } catch (IOException e) {
                 try {
-                    emitter.send(SseEmitter.event().data("Conversation does not exist").name("error"));
+                    if (!isCompleted[0]) {
+                        emitter.send(SseEmitter.event().data("Conversation does not exist").name("error"));
+                    }
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
-                emitter.completeWithError(e);
+                if (!isCompleted[0]) {
+                    emitter.completeWithError(e);
+                }
             } finally {
-                emitter.complete();
+                if (!isCompleted[0]) {
+                    emitter.complete();
+                }
             }
         }).start();
 
