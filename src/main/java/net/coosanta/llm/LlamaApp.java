@@ -6,6 +6,7 @@ import de.kherud.llama.LlamaOutput;
 import de.kherud.llama.ModelParameters;
 import de.kherud.llama.args.MiroStat;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -57,6 +58,7 @@ public class LlamaApp {
                             sink.complete();
                         })
                         .doOnError(sink::error) // Forward errors
+                        .subscribeOn(Schedulers.boundedElastic()) // Run in a new thread
                         .subscribe();
             } catch (Exception e) {
                 sink.error(e);
