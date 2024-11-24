@@ -1,3 +1,3 @@
 package net.coosanta.llm;
 
-public record ChatRequest(String id, String prompt, Integer buffer) {}
+public record ChatRequest(String id, String prompt) {}

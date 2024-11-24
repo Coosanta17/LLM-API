@@ -20,8 +20,8 @@ public class LlmController {
         this.llamaConfig = llamaConfig;
     }
 
-    // PowerShell: Invoke-RestMethod -Uri "http://localhost:8080/api/initiate" -Method Post -Headers @{ "Content-Type" = "application/json" } -Body '"You are a helpful and knowledgeable assistant."'
-    // Bash: curl -H "Content-Type: application/json" -d 'You are a helpful and knowledgeable assistant.' http://localhost:8080/api/initiate
+    // PowerShell: Invoke-RestMethod -Uri "http://localhost:8080/api/v1/initiate" -Method Post -Headers @{ "Content-Type" = "application/json" } -Body '"You are a helpful and knowledgeable assistant."'
+    // Bash: curl -H "Content-Type: application/json" -d 'You are a helpful and knowledgeable assistant.' http://localhost:8080/api/v1/initiate
     @PostMapping("/initiate")
     public ResponseEntity<Map<String, String>> startConversation(@RequestBody String systemPrompt) throws IOException {
         Conversation conversation = new Conversation(systemPrompt, llamaConfig);
@@ -30,10 +30,11 @@ public class LlmController {
         return ResponseEntity.ok(response);
     }
 
+    // Powershell: Invoke-RestMethod -Uri "http://localhost:8080/api/v1/chat" -Method Post -ContentType "application/json" -Body '{"id": "your-uuid-here", "prompt": "your-prompt-here"}'
+    // Bash: curl -H "Content-Type: application/json" -d '{"id":"your-uuid-here","prompt":"your-prompt-here"}' http://localhost:8080/api/v1/chat
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamChat(@RequestBody ChatRequest request) {
         try {
-            // Use LlamaApp to stream the response
             LlamaApp llamaApp = new LlamaApp(UUID.fromString(request.id()), request.prompt(), llamaConfig, System.out::println);
             return llamaApp.runConversation();
         } catch (IOException e) {

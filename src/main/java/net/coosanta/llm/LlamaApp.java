@@ -45,13 +45,9 @@ public class LlamaApp {
                 .setMiroStat(MiroStat.V2)
                 .setStopStrings("<|eot_id|>");
 
-        StringBuilder responseBuilder = new StringBuilder();
-        getModelResponse(model, inferenceParameters)
-                .doOnNext(responseConsumer)
-                .doOnNext(responseBuilder::append)
-                .doOnComplete(() -> completeAndClean(responseBuilder))
-                .blockLast();
-        return getReactiveResponse(conversation);
+        return getModelResponse(model, inferenceParameters)
+                .doOnNext(responseConsumer) // Stream to consumer
+                .doOnComplete(() -> completeAndClean(new StringBuilder()));
     }
 
     private void completeAndClean(StringBuilder responseBuilder) {
@@ -62,21 +58,6 @@ public class LlamaApp {
         } catch (IOException e) {
             throw new RuntimeException("Failed to save conversation", e);
         }
-    }
-
-    private Flux<String> getReactiveResponse(Conversation conversation) {
-        LlamaModel model = initializeModel();
-
-        conversation.addMessage("User", prompt);
-
-        InferenceParameters inferenceParameters = new InferenceParameters(generateContext(conversation))
-                .setTemperature(0.7f)
-                .setPenalizeNl(true)
-                .setMiroStat(MiroStat.V2)
-                .setStopStrings("<|eot_id|>");
-
-        // Directly return the Flux<String> from getModelResponse
-        return getModelResponse(model, inferenceParameters);
     }
 
     private LlamaModel initializeModel() {
