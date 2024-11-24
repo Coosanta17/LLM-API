@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app")
 public class LlamaConfig {
     private String conversationPath;
+    private int buffer;
     private ModelConfig model = new ModelConfig();
 
     public String getConversationPath() {
@@ -17,6 +18,15 @@ public class LlamaConfig {
     public void setConversationPath(String conversationPath) {
         this.conversationPath = conversationPath;
     }
+
+    public int getBuffer() {
+        return this.buffer;
+    }
+
+    public void setBuffer(int buffer) {
+        this.buffer = buffer;
+    }
+
 
     public static class ModelConfig {
         private String path;
