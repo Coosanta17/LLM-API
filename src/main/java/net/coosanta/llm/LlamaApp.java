@@ -5,6 +5,7 @@ import de.kherud.llama.LlamaModel;
 import de.kherud.llama.LlamaOutput;
 import de.kherud.llama.ModelParameters;
 import de.kherud.llama.args.MiroStat;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -23,17 +24,47 @@ public class LlamaApp {
     private final String prompt;
     private final Path savePath;
 
+    private final Conversation conversation;
+
     public LlamaApp(UUID conversationUuid, String inPrompt, LlamaConfig settings, Consumer<String> responseConsumer) throws IOException {
         this.settings = settings;
         this.responseConsumer = responseConsumer;
         this.prompt = inPrompt;
         this.savePath = Path.of(settings.getConversationPath() + "/" + conversationUuid + ".json");
 
-        Conversation conversation = ConversationUtils.loadFromFile(savePath);
-        runConversation(conversation);
+        conversation = ConversationUtils.loadFromFile(savePath);
     }
 
-    private void runConversation(Conversation conversation) throws IOException {
+    public Flux<String> runConversation() throws IOException {
+        LlamaModel model = initializeModel();
+        conversation.addMessage("User", prompt);
+
+        InferenceParameters inferenceParameters = new InferenceParameters(generateContext(conversation))
+                .setTemperature(0.7f)
+                .setPenalizeNl(true)
+                .setMiroStat(MiroStat.V2)
+                .setStopStrings("<|eot_id|>");
+
+        StringBuilder responseBuilder = new StringBuilder();
+        getModelResponse(model, inferenceParameters)
+                .doOnNext(responseConsumer)
+                .doOnNext(responseBuilder::append)
+                .doOnComplete(() -> completeAndClean(responseBuilder))
+                .blockLast();
+        return getReactiveResponse(conversation);
+    }
+
+    private void completeAndClean(StringBuilder responseBuilder) {
+        String cleanedResponse = unformatMessage(responseBuilder.toString()).trim();
+        conversation.addMessage("Assistant", cleanedResponse);
+        try {
+            ConversationUtils.saveToFile(conversation, savePath);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save conversation", e);
+        }
+    }
+
+    private Flux<String> getReactiveResponse(Conversation conversation) {
         LlamaModel model = initializeModel();
 
         conversation.addMessage("User", prompt);
@@ -44,24 +75,8 @@ public class LlamaApp {
                 .setMiroStat(MiroStat.V2)
                 .setStopStrings("<|eot_id|>");
 
-        Stream<String> modelResponseStream = getModelResponse(model, inferenceParameters);
-
-        try {
-            // Send each part of the response live
-            modelResponseStream.forEach(responseConsumer);
-        } catch (Exception e) {
-            throw new IOException("Error during response streaming", e);
-        }
-
-        String rawResponse = conversation.getMessages().stream()
-                .map(Message::content)
-                .reduce("", (acc, msg) -> acc + msg);
-
-        String cleanedResponse = unformatMessage(rawResponse).trim();
-
-        conversation.addMessage("Assistant", cleanedResponse);
-
-        ConversationUtils.saveToFile(conversation, savePath);
+        // Directly return the Flux<String> from getModelResponse
+        return getModelResponse(model, inferenceParameters);
     }
 
     private LlamaModel initializeModel() {
@@ -86,7 +101,7 @@ public class LlamaApp {
         return generatedContext.toString();
     }
 
-    private Stream<String> getModelResponse(LlamaModel model, InferenceParameters inferenceParams) {
+    private Flux<String> getModelResponse(LlamaModel model, InferenceParameters inferenceParams) {
         Iterator<LlamaOutput> iterator = model.generate(inferenceParams).iterator();
         Iterable<String> iterable = () -> new Iterator<>() {
             @Override
@@ -99,7 +114,11 @@ public class LlamaApp {
                 return iterator.next().toString();
             }
         };
-        return StreamSupport.stream(iterable.spliterator(), false);
+        return Flux.using(
+                () -> StreamSupport.stream(iterable.spliterator(), false),
+                Flux::fromStream,
+                Stream::close
+        );
     }
 
 }
