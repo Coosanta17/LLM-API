@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -40,5 +41,12 @@ public class LlmController {
         } catch (IOException e) {
             return Flux.error(new RuntimeException("Failed to load conversation or generate response", e));
         }
+    }
+
+    @PostMapping("/testStream")
+    public Flux<String> testStream() {
+        return Flux.interval(Duration.ofSeconds(1))
+                .map(i -> "Message " + i)
+                .take(10);
     }
 }
