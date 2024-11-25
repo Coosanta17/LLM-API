@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.UUID;
 
 public class Conversation {
-    private UUID uuid;
+    private final UUID uuid;
     private String systemPrompt;
-    private List<Message> messages;
+    private String title;
+    private final List<Message> messages;
 
     public Conversation(String systemPrompt, LlamaConfig settings) throws IOException {
         this.uuid = UUID.randomUUID();
@@ -17,6 +18,13 @@ public class Conversation {
         this.messages = new ArrayList<>();
 
         ConversationUtils.saveToFile(this, Path.of(settings.getConversationPath() + "/" + uuid + ".json"));
+    }
+
+    public Conversation(Conversation conversation) {
+        this.uuid = conversation.getUuid();
+        this.systemPrompt = conversation.getSystemPrompt();
+        this.title = conversation.getTitle();
+        this.messages = conversation.getMessages();
     }
 
     public String getSystemPrompt() {
@@ -37,6 +45,14 @@ public class Conversation {
 
     public UUID getUuid() {
         return uuid;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 }
 

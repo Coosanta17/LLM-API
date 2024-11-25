@@ -10,14 +10,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static net.coosanta.llm.ConversationUtils.getConversationSavePathFromUuid;
+import static net.coosanta.llm.ConversationUtils.loadFromFile;
+
 // Ignore IDE warnings about these classes, they are used and are quite important!
 @RestController
 @RequestMapping("/api/v1/")
 public class LlmController {
-    public final LlamaConfig llamaConfig;
+    public static LlamaConfig llamaConfig;
+    private LlamaApp llamaApp;
 
-    public LlmController(LlamaConfig llamaConfig) {
-        this.llamaConfig = llamaConfig;
+    public LlmController(LlamaConfig llamaConfig) throws IOException {
+        LlmController.llamaConfig = llamaConfig;
+        this.llamaApp = new LlamaApp(System.out::print); // Temporary fix. TODO: Improve model loading
+
     }
 
     // PowerShell: Invoke-RestMethod -Uri "http://localhost:8080/api/v1/initiate" -Method Post -Headers @{ "Content-Type" = "application/json" } -Body '"You are a helpful and knowledgeable assistant."'
@@ -35,17 +41,24 @@ public class LlmController {
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamChat(@RequestBody ChatRequest request) {
         try {
-            LlamaApp llamaApp = new LlamaApp(UUID.fromString(request.id()), request.prompt(), llamaConfig, System.out::println);
-            return llamaApp.runConversation();
+            return llamaApp.runConversation(UUID.fromString(request.id()), request.prompt());
         } catch (IOException e) {
             return Flux.error(new RuntimeException("Failed to load conversation or generate response", e));
         }
     }
 
-//    @PostMapping("/testStream")
-//    public Flux<String> testStream() {
-//        return Flux.interval(Duration.ofSeconds(1))
-//                .map(i -> "Message " + i)
-//                .take(10);
-//    }
+    // NOT IDEAL!!! FIX ASAP!!!!
+    @PutMapping("/title")
+    public ResponseEntity<String> setConversationTitle(@RequestBody String title, @RequestBody String uuid) throws IOException {
+        Conversation conversation = loadFromFile(getConversationSavePathFromUuid(UUID.fromString(uuid)));
+        if (title == null) {
+            new Thread(() -> {
+                String generatedTitle = llamaApp.generateTitle(conversation);
+                conversation.setTitle(generatedTitle);
+            }).start();
+        } else {
+            conversation.setTitle(title);
+        }
+        return ResponseEntity.ok(title);
+    }
 }

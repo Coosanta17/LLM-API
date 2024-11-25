@@ -6,10 +6,13 @@ import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.UUID;
 
 // Static methods to do actions to conversations.
 public class ConversationUtils {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+    static LlamaConfig settings = LlmController.llamaConfig;
 
     public static String toJson(Conversation conversation) {
         return gson.toJson(conversation);
@@ -41,6 +44,10 @@ public class ConversationUtils {
                 .replaceAll("<\\|start_header_id\\|>.*?<\\|end_header_id\\|>\n", "") // Remove role header
                 .replaceAll("<\\|eot_id\\|>", "") // Remove end-of-text token
                 .trim(); // Trim extra whitespace
+    }
+
+    public static Path getConversationSavePathFromUuid(UUID uuid) {
+        return Path.of(settings.getConversationPath() + "/" + uuid + ".json");
     }
 }
 

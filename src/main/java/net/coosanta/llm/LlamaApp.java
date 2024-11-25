@@ -16,49 +16,41 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static net.coosanta.llm.ConversationUtils.formatMessage;
-import static net.coosanta.llm.ConversationUtils.unformatMessage;
+import static net.coosanta.llm.ConversationUtils.*;
 
 public class LlamaApp {
-    private final LlamaConfig settings;
     private final Consumer<String> responseConsumer;
-    private final String prompt;
-    private final Path savePath;
+    private Path savePath;
+    private Conversation conversation;
+    private final LlamaConfig settings = LlmController.llamaConfig;
+    private final LlamaModel model;
 
-    private final Conversation conversation;
-
-    public LlamaApp(UUID conversationUuid, String inPrompt, LlamaConfig settings, Consumer<String> responseConsumer) throws IOException {
-        this.settings = settings;
+    public LlamaApp(Consumer<String> responseConsumer) throws IOException {
         this.responseConsumer = responseConsumer;
-        this.prompt = inPrompt;
-        this.savePath = Path.of(settings.getConversationPath() + "/" + conversationUuid + ".json");
-
-        conversation = ConversationUtils.loadFromFile(savePath);
+        this.model = initializeModel();
     }
 
-    public Flux<String> runConversation() throws IOException {
-        LlamaModel model = initializeModel();
+    public Flux<String> runConversation(UUID conversationUuid, String prompt) throws IOException {
+        this.savePath = getConversationSavePathFromUuid(conversationUuid);
+        this.conversation = ConversationUtils.loadFromFile(savePath);
+
         conversation.addMessage("User", prompt);
 
-        InferenceParameters inferenceParameters = new InferenceParameters(generateContext(conversation))
-                .setTemperature(0.7f)
-                .setPenalizeNl(true)
-                .setMiroStat(MiroStat.V2)
-                .setStopStrings("<|eot_id|>");
+        InferenceParameters inferenceParameters = generateInferenceParameters(conversation);
 
         StringBuilder response = new StringBuilder();
 
         return Flux.create(sink -> {
             try {
-                getModelResponse(model, inferenceParameters)
+                getModelResponse(inferenceParameters)
                         .doOnNext(data -> {
-                            responseConsumer.accept(data); // Log or process the response
+                            responseConsumer.accept(data); // Log the response (debug)
                             sink.next(data);               // Push to API stream
                             response.append(data);         // Append to response
 
                         })
                         .doOnComplete(() -> {
-                            completeAndClean(response);
+                            cleanAndComplete(response);
                             sink.complete();
                         })
                         .doOnError(sink::error) // Forward errors
@@ -70,7 +62,25 @@ public class LlamaApp {
         });
     }
 
-    private void completeAndClean(StringBuilder responseBuilder) {
+    // Highly recommended to run this in a separate thread.
+    public String generateTitle(Conversation conversation) {
+        Conversation titleConversation = new Conversation(conversation);
+
+        titleConversation.addMessage("User", "make a title for this conversation. Respond only with the title. Try to keep it short.");
+
+        InferenceParameters inferenceParameters = generateInferenceParameters(titleConversation);
+
+        String rawTitle = getModelResponse(inferenceParameters)
+                .collectList()
+                .map(list -> String.join("", list))
+                .block(); // Block to get the result synchronously
+
+        assert rawTitle != null; // ask ide
+        // Removes quotation marks from the title if they exist (as the model can sometimes generate them)
+        return (rawTitle.startsWith("\"") && rawTitle.endsWith("\"")) ? rawTitle.substring(1, rawTitle.length() - 1) : rawTitle;
+    }
+
+    private void cleanAndComplete(StringBuilder responseBuilder) {
         String cleanedResponse = unformatMessage(responseBuilder.toString()).trim();
         conversation.addMessage("Assistant", cleanedResponse);
         try {
@@ -90,7 +100,15 @@ public class LlamaApp {
         return new LlamaModel(modelParams);
     }
 
-    private String generateContext(Conversation conversation) {
+    private static InferenceParameters generateInferenceParameters(Conversation conversation) {
+        return new InferenceParameters(generateContext(conversation))
+                .setTemperature(0.7f)
+                .setPenalizeNl(true)
+                .setMiroStat(MiroStat.V2)
+                .setStopStrings("<|eot_id|>");
+    }
+
+    private static String generateContext(Conversation conversation) {
         StringBuilder generatedContext = new StringBuilder();
 
         // Adds system prompt to context
@@ -102,7 +120,7 @@ public class LlamaApp {
         return generatedContext.toString();
     }
 
-    private Flux<String> getModelResponse(LlamaModel model, InferenceParameters inferenceParams) {
+    private Flux<String> getModelResponse(InferenceParameters inferenceParams) {
         Iterator<LlamaOutput> iterator = model.generate(inferenceParams).iterator();
         Iterable<String> iterable = () -> new Iterator<>() {
             @Override
