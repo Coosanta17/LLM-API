@@ -46,15 +46,19 @@ public class LlamaApp {
                 .setMiroStat(MiroStat.V2)
                 .setStopStrings("<|eot_id|>");
 
+        StringBuilder response = new StringBuilder();
+
         return Flux.create(sink -> {
             try {
                 getModelResponse(model, inferenceParameters)
                         .doOnNext(data -> {
                             responseConsumer.accept(data); // Log or process the response
                             sink.next(data);               // Push to API stream
+                            response.append(data);         // Append to response
+
                         })
                         .doOnComplete(() -> {
-                            completeAndClean(new StringBuilder());
+                            completeAndClean(response);
                             sink.complete();
                         })
                         .doOnError(sink::error) // Forward errors
