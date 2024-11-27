@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -36,7 +37,7 @@ public class LlmController {
         return ResponseEntity.ok(response);
     }
 
-    // Bash: curl -H "Content-Type: application/json" -d '{"id":"your-uuid-here","prompt":"your-prompt-here"}' http://localhost:8080/api/v1/chat
+    // Bash: curl -H "Content-Type: application/json" -d '{"prompt":"your-prompt-here"}' http://localhost:8080/api/v1/chat/your-uuid-here
     @PostMapping(value = "/chat/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamChat(@PathVariable String id, @RequestBody String prompt) {
         try {
@@ -50,7 +51,8 @@ public class LlmController {
     // Bash (generate title): curl -X PUT "http://localhost:8080/api/v1/title?uuid=your-uuid-here"
     @PutMapping("/title")
     public ResponseEntity<String> setConversationTitle(@RequestParam(required = false) String title, @RequestParam String uuid) throws IOException {
-        Conversation conversation = loadFromFile(getConversationSavePathFromUuid(UUID.fromString(uuid)));
+        Path conversationPath = getConversationSavePathFromUuid(UUID.fromString(uuid));
+        Conversation conversation = loadFromFile(conversationPath);
 
         if (title == null) {
             if (conversation.getMessages().isEmpty()) {
@@ -66,6 +68,7 @@ public class LlmController {
         } else {
             conversation.setTitle(title);
         }
+        saveToFile(conversation, conversationPath);
         return ResponseEntity.ok(title);
     }
 
@@ -75,7 +78,7 @@ public class LlmController {
     public ResponseEntity<?> getConversations(@PathVariable String id) {
         try {
             if (Objects.equals(id, "all")) {
-                return ResponseEntity.ok(getAllConversations());
+                return ResponseEntity.ok(getAllConversationsWithoutMessages());
             } else {
                 return ResponseEntity.ok(loadFromFile(getConversationSavePathFromUuid(UUID.fromString(id))));
             }

@@ -55,7 +55,7 @@ public class ConversationUtils {
         return Path.of(settings.getConversationPath() + "/" + uuid + ".json");
     }
 
-    public static List<Conversation> getAllConversations() throws IOException {
+    public static List<Conversation> getAllConversationsWithoutMessages() throws IOException {
         List<Conversation> conversations = new ArrayList<>();
         Path conversationsDir = Paths.get(settings.getConversationPath());
         Logger logger = Logger.getLogger(ConversationUtils.class.getName());
@@ -63,7 +63,9 @@ public class ConversationUtils {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(conversationsDir, "*.json")) {
             for (Path entry : stream) {
                 try {
-                    conversations.add(loadFromFile(entry));
+                    Conversation conversation = loadFromFile(entry);
+                    conversation.setMessages(new ArrayList<>()); // Clear messages
+                    conversations.add(conversation);
                 } catch (IOException e) {
                     logger.warning("Failed to load conversation from file: " + entry + " - " + e.getMessage());
                 }

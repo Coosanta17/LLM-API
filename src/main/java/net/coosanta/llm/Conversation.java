@@ -10,7 +10,7 @@ public class Conversation {
     private final UUID uuid;
     private String systemPrompt;
     private String title;
-    private final List<Message> messages;
+    private List<Message> messages;
 
     public Conversation(String systemPrompt, LlamaConfig settings) throws IOException {
         this.uuid = UUID.randomUUID();
@@ -37,6 +37,10 @@ public class Conversation {
 
     public List<Message> getMessages() {
         return messages;
+    }
+
+    public void setMessages(List<Message> messages) {
+        this.messages = messages;
     }
 
     public void addMessage(String role, String content) {
