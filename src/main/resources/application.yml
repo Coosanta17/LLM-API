@@ -20,7 +20,7 @@ app:
     # remember more of the conversation but will use more RAM.
     # Llama.cpp default 512 (model might be a bit forgetful).
     # Set to 0 to load model default (might use too much ram)
-    context: 2048
+    context: 1024
 
     # How many threads the model uses. The more threads the faster
     # the model responds. However, this can result in other
@@ -29,5 +29,21 @@ app:
 
     # Set the number of layers to store in VRAM (use default: -1)
     gpu-layers: -1
+
+    # Time in minutes after last activity before the model unloads from memory.
+    # Set to 0 to load the model only when generating.
+    # Set to -1 if you want the model to never unload (until program terminates).
+    inactivity-timeout: 10
+
+    # Whether to load the model on application startup or not.
+    # If false, the model will only load once `/chat` is called from api.
+    # Loading on startup will decrease the time the model responds on the
+    # first `/chat` that the application receives at the cost of more
+    # background resource use (especially RAM).
+    # Inactivity timeouts still apply, which means if the model doesn't do anything for
+    # the configured time since start it will still unload the model.
+    # If you want the model to stay loaded for the entirety of the application's
+    # lifecycle, set this to true and `inactivity-timeout` to -1.
+    load-on-start: false
 
     # more setting to come!

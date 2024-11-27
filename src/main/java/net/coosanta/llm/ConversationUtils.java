@@ -4,9 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 // Static methods to do actions to conversations.
 public class ConversationUtils {
@@ -49,5 +54,24 @@ public class ConversationUtils {
     public static Path getConversationSavePathFromUuid(UUID uuid) {
         return Path.of(settings.getConversationPath() + "/" + uuid + ".json");
     }
+
+    public static List<Conversation> getAllConversations() throws IOException {
+        List<Conversation> conversations = new ArrayList<>();
+        Path conversationsDir = Paths.get(settings.getConversationPath());
+        Logger logger = Logger.getLogger(ConversationUtils.class.getName());
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(conversationsDir, "*.json")) {
+            for (Path entry : stream) {
+                try {
+                    conversations.add(loadFromFile(entry));
+                } catch (IOException e) {
+                    logger.warning("Failed to load conversation from file: " + entry + " - " + e.getMessage());
+                }
+            }
+        }
+
+        return conversations;
+    }
+
 }
 

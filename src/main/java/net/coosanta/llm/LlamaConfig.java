@@ -33,6 +33,8 @@ public class LlamaConfig {
         private int context;
         private int threads;
         private int gpuLayers;
+        private int inactivityTimeout;
+        private boolean loadOnStart;
 
         public String getPath() {
             return this.path;
@@ -64,6 +66,22 @@ public class LlamaConfig {
 
         public void setGpuLayers(int gpuLayers) {
             this.gpuLayers = gpuLayers;
+        }
+
+        public int getInactivityTimeout() {
+            return this.inactivityTimeout;
+        }
+
+        public void setInactivityTimeout(int inactivityTimeout) {
+            this.inactivityTimeout = inactivityTimeout;
+        }
+
+        public boolean getLoadOnStart() {
+            return this.loadOnStart;
+        }
+
+        public void setLoadOnStart(boolean loadOnStart) {
+            this.loadOnStart = loadOnStart;
         }
     }
 

@@ -12,6 +12,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -20,14 +24,25 @@ import static net.coosanta.llm.ConversationUtils.*;
 
 public class LlamaApp {
     private final Consumer<String> responseConsumer;
-    private Path savePath;
-    private Conversation conversation;
     private final LlamaConfig settings = LlmController.llamaConfig;
-    private final LlamaModel model;
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    private Path savePath;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    private Conversation conversation;
+    private LlamaModel model;
+
+    private ScheduledFuture<?> deinitializeTaskFuture;
+
 
     public LlamaApp(Consumer<String> responseConsumer) throws IOException {
         this.responseConsumer = responseConsumer;
-        this.model = initializeModel();
+
+        // Load the model on startup if configured
+        if (settings.getModelSettings().getLoadOnStart() && settings.getModelSettings().getInactivityTimeout() != 0) {
+            loadModel();
+            scheduleModelDeinitialization();
+        }
     }
 
     public Flux<String> runConversation(UUID conversationUuid, String prompt) throws IOException {
@@ -75,7 +90,7 @@ public class LlamaApp {
                 .map(list -> String.join("", list))
                 .block(); // Block to get the result synchronously
 
-        assert rawTitle != null; // ask ide
+        assert rawTitle != null; // ask ide why this is here.
         // Removes quotation marks from the title if they exist (as the model can sometimes generate them)
         return (rawTitle.startsWith("\"") && rawTitle.endsWith("\"")) ? rawTitle.substring(1, rawTitle.length() - 1) : rawTitle;
     }
@@ -90,9 +105,9 @@ public class LlamaApp {
         }
     }
 
-    private LlamaModel initializeModel() {
+    private LlamaModel initializeModel(String modelPath) {
         ModelParameters modelParams = new ModelParameters()
-                .setModelFilePath(settings.getModelSettings().getPath())
+                .setModelFilePath(modelPath)
                 .setNGpuLayers(settings.getModelSettings().getGpuLayers())
                 .setNCtx(settings.getModelSettings().getContext())
                 .setNThreads(settings.getModelSettings().getThreads());
@@ -121,7 +136,10 @@ public class LlamaApp {
     }
 
     private Flux<String> getModelResponse(InferenceParameters inferenceParams) {
+        loadModel();
+
         Iterator<LlamaOutput> iterator = model.generate(inferenceParams).iterator();
+
         Iterable<String> iterable = () -> new Iterator<>() {
             @Override
             public boolean hasNext() {
@@ -133,11 +151,43 @@ public class LlamaApp {
                 return iterator.next().toString();
             }
         };
+
         return Flux.using(
-                () -> StreamSupport.stream(iterable.spliterator(), false),
-                Flux::fromStream,
-                Stream::close
-        );
+                        () -> StreamSupport.stream(iterable.spliterator(), false),
+                        Flux::fromStream,
+                        Stream::close
+                )
+                .doOnComplete(this::scheduleModelDeinitialization);
+    }
+
+    private void scheduleModelDeinitialization() {
+        int inactivityTimeout = settings.getModelSettings().getInactivityTimeout();
+
+        if (inactivityTimeout == -1) {
+            return; // Never unload the model
+        }
+
+        Runnable deinitializeTask = () -> {
+            model.close();
+            model = null;
+        };
+
+        if (inactivityTimeout == 0) {
+            deinitializeTask.run(); // Unload the model immediately after generating
+        } else {
+            // Schedule model deinitialization after configured minutes of inactivity
+            deinitializeTaskFuture = scheduler.schedule(deinitializeTask, inactivityTimeout, TimeUnit.MINUTES);
+        }
+    }
+
+    private void loadModel() {
+        if (model == null) {
+            model = initializeModel(settings.getModelSettings().getPath());
+        }
+
+        if (deinitializeTaskFuture != null) {
+            deinitializeTaskFuture.cancel(false);
+        }
     }
 
 }
