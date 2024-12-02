@@ -28,7 +28,7 @@ public class LlamaApp {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-    private Path savePath;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    private Path savePath;
     private Conversation conversation;
     private LlamaModel model;
 
@@ -65,7 +65,7 @@ public class LlamaApp {
 
                         })
                         .doOnComplete(() -> {
-                            cleanAndComplete(response);
+                            cleanCompleteAndSave(response);
                             sink.complete();
                         })
                         .doOnError(sink::error) // Forward errors
@@ -95,7 +95,7 @@ public class LlamaApp {
         return (rawTitle.startsWith("\"") && rawTitle.endsWith("\"")) ? rawTitle.substring(1, rawTitle.length() - 1) : rawTitle;
     }
 
-    private void cleanAndComplete(StringBuilder responseBuilder) {
+    private void cleanCompleteAndSave(StringBuilder responseBuilder) {
         String cleanedResponse = unformatMessage(responseBuilder.toString()).trim();
         conversation.addMessage("Assistant", cleanedResponse);
         try {
@@ -170,6 +170,7 @@ public class LlamaApp {
         Runnable deinitializeTask = () -> {
             model.close();
             model = null;
+            System.out.println("Unloaded model");
         };
 
         if (inactivityTimeout == 0) {
