@@ -11,6 +11,7 @@ public class Conversation {
     private String systemPrompt;
     private String title;
     private List<Message> messages;
+    private int totalTokenLength;
 
     public Conversation(String systemPrompt, LlamaConfig settings) throws IOException {
         this.uuid = UUID.randomUUID();
@@ -25,6 +26,7 @@ public class Conversation {
         this.systemPrompt = conversation.getSystemPrompt();
         this.title = conversation.getTitle();
         this.messages = conversation.getMessages();
+        this.totalTokenLength = conversation.getTotalTokenLength();
     }
 
     public String getSystemPrompt() {
@@ -43,8 +45,8 @@ public class Conversation {
         this.messages = messages;
     }
 
-    public void addMessage(String role, String content) {
-        this.messages.add(new Message(role, content));
+    public void addMessage(String role, String content, Integer tokenLength) {
+        this.messages.add(new Message(role, content, tokenLength));
     }
 
     public UUID getUuid() {
@@ -57,6 +59,14 @@ public class Conversation {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public int getTotalTokenLength() {
+        return totalTokenLength;
+    }
+
+    public void setTotalTokenLength(int totalTokenLength) {
+        this.totalTokenLength = totalTokenLength;
     }
 }
 

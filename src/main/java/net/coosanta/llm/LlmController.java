@@ -87,4 +87,10 @@ public class LlmController {
         }
     }
 
+    // Bash: curl -X GET "http://localhost:8080/api/v1/conversation_length/{uuid}"
+    @GetMapping("/conversation_length/{id}")
+    public ResponseEntity<Integer> getConversationLength(@PathVariable String id) throws IOException {
+        return ResponseEntity.ok(loadFromFile(getConversationSavePathFromUuid(UUID.fromString(id))).getTotalTokenLength());
+    }
+
 }

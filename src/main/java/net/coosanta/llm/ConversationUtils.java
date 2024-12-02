@@ -45,6 +45,8 @@ public class ConversationUtils {
 
     public static String unformatMessage(String formattedMessage) {
         // Use regex to extract only the content between the role headers and the end token
+        // Example formatted message:
+        // "<|start_header_id|>User<|end_header_id|>\nHello, how are you?<|eot_id|>\n\n"
         return formattedMessage
                 .replaceAll("<\\|start_header_id\\|>.*?<\\|end_header_id\\|>\n", "") // Remove role header
                 .replaceAll("<\\|eot_id\\|>", "") // Remove end-of-text token

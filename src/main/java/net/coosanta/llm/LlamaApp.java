@@ -10,6 +10,7 @@ import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -28,14 +29,13 @@ public class LlamaApp {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-    private Path savePath;
-    private Conversation conversation;
+    private final HashMap<UUID, Conversation> loadedConversations = new HashMap<>();
     private LlamaModel model;
 
     private ScheduledFuture<?> deinitializeTaskFuture;
 
 
-    public LlamaApp(Consumer<String> responseConsumer) throws IOException {
+    public LlamaApp(Consumer<String> responseConsumer) {
         this.responseConsumer = responseConsumer;
 
         // Load the model on startup if configured
@@ -46,10 +46,21 @@ public class LlamaApp {
     }
 
     public Flux<String> runConversation(UUID conversationUuid, String prompt) throws IOException {
-        this.savePath = getConversationSavePathFromUuid(conversationUuid);
-        this.conversation = ConversationUtils.loadFromFile(savePath);
+        Path savePath = getConversationSavePathFromUuid(conversationUuid);
 
-        conversation.addMessage("User", prompt);
+        // Loads the conversation if it hasn't been loaded yet
+        if (!loadedConversations.containsKey(conversationUuid)) {
+            Conversation loadedConversation = ConversationUtils.loadFromFile(savePath);
+
+            loadedConversation.setTotalTokenLength(conversationTokenLength(loadedConversation));
+
+            loadedConversations.put(conversationUuid, loadedConversation);
+        }
+
+        Conversation conversation = loadedConversations.get(conversationUuid);
+
+        // IDK how to make this not bad.
+        conversation.addMessage("User", prompt, calculateTokenLength(formatMessage("User", prompt)));
 
         InferenceParameters inferenceParameters = generateInferenceParameters(conversation);
 
@@ -65,7 +76,7 @@ public class LlamaApp {
 
                         })
                         .doOnComplete(() -> {
-                            cleanCompleteAndSave(response);
+                            cleanCompleteAndSave(response, savePath, conversation);
                             sink.complete();
                         })
                         .doOnError(sink::error) // Forward errors
@@ -81,7 +92,7 @@ public class LlamaApp {
     public String generateTitle(Conversation conversation) {
         Conversation titleConversation = new Conversation(conversation);
 
-        titleConversation.addMessage("User", "make a title for this conversation. Respond only with the title. Try to keep it short.");
+        titleConversation.addMessage("User", "make a title for this conversation. Respond only with the title. Try to keep it short.", null);
 
         InferenceParameters inferenceParameters = generateInferenceParameters(titleConversation);
 
@@ -95,9 +106,31 @@ public class LlamaApp {
         return (rawTitle.startsWith("\"") && rawTitle.endsWith("\"")) ? rawTitle.substring(1, rawTitle.length() - 1) : rawTitle;
     }
 
-    private void cleanCompleteAndSave(StringBuilder responseBuilder) {
+    public int conversationTokenLength(Conversation input) {
+        return calculateTokenLength(generateContext(input));
+    }
+
+    // How to make this not bound to LlamaApp class??
+    public int calculateTokenLength(String formattedInput) {
+        if (!isModelLoaded()) {
+            return -1;
+        }
+        return model.encode(formattedInput).length;
+    }
+
+    private boolean isModelLoaded() {
+        if (model == null) {
+            System.out.println("No loaded model.");
+            return false;
+        }
+        return true;
+    }
+
+    private void cleanCompleteAndSave(StringBuilder responseBuilder, Path savePath, Conversation conversation) {
         String cleanedResponse = unformatMessage(responseBuilder.toString()).trim();
-        conversation.addMessage("Assistant", cleanedResponse);
+
+        // Fix this
+        conversation.addMessage("Assistant", cleanedResponse, calculateTokenLength(formatMessage("Assistant", cleanedResponse)));
         try {
             ConversationUtils.saveToFile(conversation, savePath);
         } catch (IOException e) {
@@ -130,7 +163,7 @@ public class LlamaApp {
         generatedContext.append(conversation.getSystemPrompt());
 
         for (Message message : conversation.getMessages()) {
-            generatedContext.append(formatMessage(message.role(), message.content()));
+            generatedContext.append(formatMessage(message.getRole(), message.getContent()));
         }
         return generatedContext.toString();
     }
