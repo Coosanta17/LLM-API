@@ -43,7 +43,7 @@ public class LlamaApp {
             scheduleModelDeinitialization();
         }
 
-        if (settings.getLoadedConversationLimit() < 1) {
+        if (settings.getLoadedConversationsLimit() < 1) {
             throw new IllegalArgumentException("Loaded conversation limit must be greater than 0");
         }
     }
@@ -62,7 +62,7 @@ public class LlamaApp {
             conversationsLoaded++;
         }
 
-        if (conversationsLoaded >= settings.getLoadedConversationLimit()) {
+        if (conversationsLoaded >= settings.getLoadedConversationsLimit()) {
             loadedConversations.remove(loadedConversations.firstEntry().getKey());
             conversationsLoaded--;
         }

@@ -23,7 +23,11 @@ public class LlmController {
     private final LlamaApp llamaApp;
 
     public LlmController(LlamaConfig llamaConfig) {
-        LlmController.llamaConfig = llamaConfig;
+        try {
+            LlmController.llamaConfig = llamaConfig;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize LlmController due to configuration error", e);
+        }
         try {
             this.llamaApp = new LlamaApp(System.out::print);
         } catch (Exception e) {

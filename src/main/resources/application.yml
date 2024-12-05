@@ -50,4 +50,6 @@ app:
     # lifecycle, set this to true and `inactivity-timeout` to -1.
     load-on-start: false
 
+    # TODO: Scrolling window thing
+
     # more setting to come!

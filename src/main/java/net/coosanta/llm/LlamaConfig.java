@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class LlamaConfig {
     private String conversationPath;
     private int buffer;
-    private int loadedConversationLimit;
+    private int loadedConversationsLimit;
     private ModelConfig model = new ModelConfig();
 
     public String getConversationPath() {
@@ -28,12 +28,12 @@ public class LlamaConfig {
         this.buffer = buffer;
     }
 
-    public int getLoadedConversationLimit() {
-        return this.loadedConversationLimit;
+    public int getLoadedConversationsLimit() {
+        return this.loadedConversationsLimit;
     }
 
-    public void setLoadedConversationLimit(int loadedConversationLimit) {
-        this.loadedConversationLimit = loadedConversationLimit;
+    public void setLoadedConversationsLimit(int loadedConversationsLimit) {
+        this.loadedConversationsLimit = loadedConversationsLimit;
     }
 
 
