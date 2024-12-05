@@ -10,9 +10,7 @@ import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -29,7 +27,8 @@ public class LlamaApp {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-    private final HashMap<UUID, Conversation> loadedConversations = new HashMap<>();
+    private final LinkedHashMap<UUID, Conversation> loadedConversations = new LinkedHashMap<>();
+    private int conversationsLoaded = 0;
     private LlamaModel model;
 
     private ScheduledFuture<?> deinitializeTaskFuture;
@@ -43,6 +42,10 @@ public class LlamaApp {
             loadModel();
             scheduleModelDeinitialization();
         }
+
+        if (settings.getLoadedConversationLimit() < 1) {
+            throw new IllegalArgumentException("Loaded conversation limit must be greater than 0");
+        }
     }
 
     public Flux<String> runConversation(UUID conversationUuid, String prompt) throws IOException {
@@ -55,6 +58,13 @@ public class LlamaApp {
             loadedConversation.setTotalTokenLength(conversationTokenLength(loadedConversation));
 
             loadedConversations.put(conversationUuid, loadedConversation);
+
+            conversationsLoaded++;
+        }
+
+        if (conversationsLoaded >= settings.getLoadedConversationLimit()) {
+            loadedConversations.remove(loadedConversations.firstEntry().getKey());
+            conversationsLoaded--;
         }
 
         Conversation conversation = loadedConversations.get(conversationUuid);
@@ -156,6 +166,7 @@ public class LlamaApp {
                 .setStopStrings("<|eot_id|>");
     }
 
+    // TODO: conversation context caching
     private static String generateContext(Conversation conversation) {
         StringBuilder generatedContext = new StringBuilder();
 

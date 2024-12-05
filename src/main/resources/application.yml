@@ -10,6 +10,10 @@ app:
   # File path where conversations are stored relative to project root.
   conversation-path: ./conversations/
 
+  # Maximum amount of conversations to store in memory.
+  # Lower values may increase disk activity but reduce memory usage (small impact)
+  loaded-conversations-limit: 100
+
 
   model:
     # Path to the gguf file relative to project root. Uses placeholder llama.gguf for now.

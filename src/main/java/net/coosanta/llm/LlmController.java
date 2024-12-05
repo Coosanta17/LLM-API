@@ -22,10 +22,13 @@ public class LlmController {
     public static LlamaConfig llamaConfig;
     private final LlamaApp llamaApp;
 
-    public LlmController(LlamaConfig llamaConfig) throws IOException {
+    public LlmController(LlamaConfig llamaConfig) {
         LlmController.llamaConfig = llamaConfig;
-        this.llamaApp = new LlamaApp(System.out::print);
-
+        try {
+            this.llamaApp = new LlamaApp(System.out::print);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize LlamaApp", e);
+        }
     }
 
     // Bash: curl -H "Content-Type: application/json" -d 'You are a helpful and knowledgeable assistant.' http://localhost:8080/api/v1/initiate
@@ -72,9 +75,9 @@ public class LlmController {
         return ResponseEntity.ok(title);
     }
 
-    // Bash (all): curl -X GET "http://localhost:8080/api/v1/conversations/all"
-    // Bash (specific):curl -X GET "http://localhost:8080/api/v1/conversations/{uuid}"
-    @GetMapping("/conversations/{id}")
+    // Bash (all): curl -X GET "http://localhost:8080/api/v1/conversation/all"
+    // Bash (specific):curl -X GET "http://localhost:8080/api/v1/conversation/{uuid}"
+    @GetMapping("/conversation/{id}")
     public ResponseEntity<?> getConversations(@PathVariable String id) {
         try {
             if (Objects.equals(id, "all")) {
@@ -85,12 +88,6 @@ public class LlmController {
         } catch (IOException e) {
             return ResponseEntity.badRequest().body("Failed to load conversation with id: " + id);
         }
-    }
-
-    // Bash: curl -X GET "http://localhost:8080/api/v1/conversation_length/{uuid}"
-    @GetMapping("/conversation_length/{id}")
-    public ResponseEntity<Integer> getConversationLength(@PathVariable String id) throws IOException {
-        return ResponseEntity.ok(loadFromFile(getConversationSavePathFromUuid(UUID.fromString(id))).getTotalTokenLength());
     }
 
 }
