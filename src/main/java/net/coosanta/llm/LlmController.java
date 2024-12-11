@@ -56,7 +56,7 @@ public class LlmController {
 
     @PostMapping("/complete")
     public Flux<String> completeChat(@RequestBody Object input) {
-        return llamaApp.complete(input);
+        return llamaApp.completeText(input);
     }
 
     @PutMapping("/edit/{convId}/{msgIndex}")

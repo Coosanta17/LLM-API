@@ -22,6 +22,8 @@ import java.util.stream.StreamSupport;
 import static net.coosanta.llm.ConversationUtils.*;
 
 public class LlamaApp {
+    private LlamaModel model;
+
     private final Consumer<String> responseConsumer;
     private final LlamaConfig settings = LlmController.llamaConfig;
 
@@ -29,7 +31,8 @@ public class LlamaApp {
 
     private final LinkedHashMap<UUID, Conversation> loadedConversations = new LinkedHashMap<>();
     private int conversationsLoaded = 0;
-    private LlamaModel model;
+
+    private final HashMap<UUID, StringBuilder> loadedConversationContext = new LinkedHashMap<>();
 
     private ScheduledFuture<?> deinitializeTaskFuture;
 
@@ -55,24 +58,34 @@ public class LlamaApp {
         if (!loadedConversations.containsKey(conversationUuid)) {
             Conversation loadedConversation = ConversationUtils.loadFromFile(savePath);
 
-            loadedConversation.setTotalTokenLength(conversationTokenLength(loadedConversation));
+            String generatedContext = generateContext(loadedConversation);
+            loadedConversation.setTotalTokenLength(calculateTokenLength(generatedContext));
 
             loadedConversations.put(conversationUuid, loadedConversation);
 
+            loadedConversationContext.put(conversationUuid, new StringBuilder(generatedContext));
+
             conversationsLoaded++;
+        } else {
+            loadedConversationContext.get(conversationUuid).append(prompt);
         }
 
         if (conversationsLoaded >= settings.getLoadedConversationsLimit()) {
-            loadedConversations.remove(loadedConversations.firstEntry().getKey());
+            UUID uuidOfConversationThatWillSoonGetUnloaded = loadedConversations.firstEntry().getKey();
+
+            loadedConversations.remove(uuidOfConversationThatWillSoonGetUnloaded);
+            loadedConversationContext.remove(uuidOfConversationThatWillSoonGetUnloaded);
+
             conversationsLoaded--;
         }
 
         Conversation conversation = loadedConversations.get(conversationUuid);
+        String context = String.valueOf(loadedConversationContext.get(conversationUuid));
 
         // IDK how to make this not bad.
         conversation.addMessage("User", prompt, calculateTokenLength(formatMessage("User", prompt)));
 
-        InferenceParameters inferenceParameters = generateInferenceParameters(conversation);
+        InferenceParameters inferenceParameters = generateStringInferenceParameters(context);
 
         StringBuilder response = new StringBuilder();
 
@@ -87,6 +100,7 @@ public class LlamaApp {
                         })
                         .doOnComplete(() -> {
                             cleanCompleteAndSave(response, savePath, conversation);
+                            loadedConversationContext.get(conversationUuid).append(response);
                             sink.complete();
                         })
                         .doOnError(sink::error) // Forward errors
@@ -98,7 +112,7 @@ public class LlamaApp {
         });
     }
 
-    public Flux<String> complete(Object input) {
+    public Flux<String> completeText(Object input) {
         InferenceParameters uncompleted;
         if (input instanceof Conversation) {
             uncompleted = generateInferenceParameters((Conversation) input);
@@ -143,14 +157,10 @@ public class LlamaApp {
         return (rawTitle.startsWith("\"") && rawTitle.endsWith("\"")) ? rawTitle.substring(1, rawTitle.length() - 1) : rawTitle;
     }
 
-    public int conversationTokenLength(Conversation input) {
-        return calculateTokenLength(generateContext(input));
-    }
-
     // How to make this not bound to LlamaApp class??
     public int calculateTokenLength(String formattedInput) {
         if (!isModelLoaded()) {
-            return -1;
+            return -1; // Hehe
         }
         return model.encode(formattedInput).length;
     }
@@ -201,7 +211,6 @@ public class LlamaApp {
                 .setStopStrings("<|eot_id|>");
     }
 
-    // TODO: conversation context caching
     private static String generateContext(Conversation conversation) {
         StringBuilder generatedContext = new StringBuilder();
 
