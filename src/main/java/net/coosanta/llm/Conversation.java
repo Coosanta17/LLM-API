@@ -49,6 +49,18 @@ public class Conversation {
         this.messages.add(new Message(role, content, tokenLength));
     }
 
+    public void editMessage(int index, String role, String content, Integer tokenLength) {
+        this.messages.set(index, new Message(role, content, tokenLength));
+    }
+
+    public Message getMessage(int index) {
+        return this.messages.get(index);
+    }
+
+    public void setMessageIgnore(int index, boolean ignore) {
+        this.messages.get(index).setIgnored(ignore);
+    }
+
     public UUID getUuid() {
         return uuid;
     }

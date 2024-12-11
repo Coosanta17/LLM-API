@@ -4,6 +4,7 @@ public class Message {
     private String role;
     private String content;
     private Integer tokenLength;
+    private boolean ignored;
 
     public Message(String role, String content, Integer tokenLength) {
         this.role = role;
@@ -33,5 +34,13 @@ public class Message {
 
     public void setTokenLength(Integer tokenLength) {
         this.tokenLength = tokenLength;
+    }
+
+    public boolean isIgnored() {
+        return ignored;
+    }
+
+    public void setIgnored(boolean ignore) {
+        this.ignored = ignore;
     }
 }

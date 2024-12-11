@@ -98,6 +98,33 @@ public class LlamaApp {
         });
     }
 
+    public Flux<String> complete(Object input) {
+        InferenceParameters uncompleted;
+        if (input instanceof Conversation) {
+            uncompleted = generateInferenceParameters((Conversation) input);
+        } else if (input instanceof String) {
+            uncompleted = generateStringInferenceParameters((String) input);
+        } else {
+            throw new IllegalArgumentException("Input must be a Conversation or a String");
+        }
+
+        return Flux.create(sink -> {
+            try {
+                getModelResponse(uncompleted)
+                        .doOnNext(data -> {
+                            responseConsumer.accept(data);
+                            sink.next(data);
+                        })
+                        .doOnComplete(sink::complete)
+                        .doOnError(sink::error) // Forward errors
+                        .subscribeOn(Schedulers.boundedElastic()) // Run in a new thread
+                        .subscribe();
+            } catch (Exception e) {
+                sink.error(e);
+            }
+        });
+    }
+
     // Highly recommended to run this in a separate thread.
     public String generateTitle(Conversation conversation) {
         Conversation titleConversation = new Conversation(conversation);
@@ -166,6 +193,14 @@ public class LlamaApp {
                 .setStopStrings("<|eot_id|>");
     }
 
+    private static InferenceParameters generateStringInferenceParameters(String input) {
+        return new InferenceParameters(input)
+                .setTemperature(0.7f)
+                .setPenalizeNl(true)
+                .setMiroStat(MiroStat.V2)
+                .setStopStrings("<|eot_id|>");
+    }
+
     // TODO: conversation context caching
     private static String generateContext(Conversation conversation) {
         StringBuilder generatedContext = new StringBuilder();
@@ -174,9 +209,15 @@ public class LlamaApp {
         generatedContext.append(conversation.getSystemPrompt());
 
         for (Message message : conversation.getMessages()) {
+            if (message.isIgnored()) continue;
             generatedContext.append(formatMessage(message.getRole(), message.getContent()));
         }
         return generatedContext.toString();
+    }
+
+    public void setIgnoreMessage(Conversation conversation, int messageIndex, boolean ignored) throws IOException {
+        conversation.setMessageIgnore(messageIndex, ignored);
+        ConversationUtils.saveToFile(conversation, getConversationSavePathFromUuid(conversation.getUuid()));
     }
 
     private Flux<String> getModelResponse(InferenceParameters inferenceParams) {

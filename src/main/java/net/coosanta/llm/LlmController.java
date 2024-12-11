@@ -54,12 +54,39 @@ public class LlmController {
         }
     }
 
+    @PostMapping("/complete")
+    public Flux<String> completeChat(@RequestBody Object input) {
+        return llamaApp.complete(input);
+    }
+
+    @PutMapping("/edit/{convId}/{msgIndex}")
+    public ResponseEntity<?> editMessage(
+            @PathVariable String convId,
+            @PathVariable int msgIndex,
+            @RequestBody Message editedMessage) {
+        try {
+            Conversation conversation = getConversation(convId);
+            conversation.editMessage(msgIndex, editedMessage.getRole(), editedMessage.getContent(), editedMessage.getTokenLength());
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().body(e);
+        }
+        return ResponseEntity.ok(editedMessage);
+    }
+
+    private static Conversation getConversation(String uuid) throws IOException {
+        Path conversationPath = getConversationSavePathFromUuid(UUID.fromString(uuid));
+        return loadFromFile(conversationPath);
+    }
+
     // Bash (set title): curl -X PUT "http://localhost:8080/api/v1/title?uuid=your-uuid-here&title=your-title-here"
     // Bash (generate title): curl -X PUT "http://localhost:8080/api/v1/title?uuid=your-uuid-here"
     @PutMapping("/title")
-    public ResponseEntity<String> setConversationTitle(@RequestParam(required = false) String title, @RequestParam String uuid) throws IOException {
+    public ResponseEntity<String> setConversationTitle(
+            @RequestParam(required = false) String title,
+            @RequestParam String uuid) throws IOException {
+
         Path conversationPath = getConversationSavePathFromUuid(UUID.fromString(uuid));
-        Conversation conversation = loadFromFile(conversationPath);
+        Conversation conversation = getConversation(uuid);
 
         if (title == null) {
             if (conversation.getMessages().isEmpty()) {
@@ -77,6 +104,28 @@ public class LlmController {
         }
         saveToFile(conversation, conversationPath);
         return ResponseEntity.ok(title);
+    }
+
+    @PutMapping("/ignore/{convId}/{msgIndex}")
+    public ResponseEntity<?> ignoreMessage(
+            @PathVariable String convId,
+            @PathVariable int msgIndex,
+            @RequestBody boolean ignore) throws IOException {
+        llamaApp.setIgnoreMessage(getConversation(convId), msgIndex, ignore);
+        return ResponseEntity.ok(ignore);
+    }
+
+    @GetMapping("/regenerate/{id}")
+    public Flux<String> regenerateLatest(@PathVariable String id) throws IOException {
+        try {
+            Conversation conversation = getConversation(id);
+            int index = conversation.getMessages().size() - 1;
+            llamaApp.setIgnoreMessage(conversation, index, true);
+        } catch (Exception e) {
+            return Flux.error(e);
+        }
+
+        return llamaApp.runConversation(UUID.fromString(id), null);
     }
 
     // Bash (all): curl -X GET "http://localhost:8080/api/v1/conversation/all"
