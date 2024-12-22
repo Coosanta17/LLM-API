@@ -5,6 +5,7 @@ import de.kherud.llama.LlamaModel;
 import de.kherud.llama.LlamaOutput;
 import de.kherud.llama.ModelParameters;
 import de.kherud.llama.args.MiroStat;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
@@ -112,16 +113,19 @@ public class LlamaApp {
         });
     }
 
-    public Flux<String> completeText(Object input) {
-        InferenceParameters uncompleted;
-        if (input instanceof Conversation) {
-            uncompleted = generateInferenceParameters((Conversation) input);
-        } else if (input instanceof String) {
-            uncompleted = generateStringInferenceParameters((String) input);
-        } else {
-            throw new IllegalArgumentException("Input must be a Conversation or a String");
-        }
+    public Flux<String> completeConversation(Conversation input) {
+        InferenceParameters incomplete = generateInferenceParameters(input);
 
+        return getCompletionFlux(incomplete);
+    }
+
+    public Flux<String> completeString(String input) {
+        InferenceParameters incomplete = generateStringInferenceParameters(input);
+
+        return getCompletionFlux(incomplete);
+    }
+
+    private @NotNull Flux<String> getCompletionFlux(InferenceParameters uncompleted) {
         return Flux.create(sink -> {
             try {
                 getModelResponse(uncompleted)

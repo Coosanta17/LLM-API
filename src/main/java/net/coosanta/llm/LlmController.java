@@ -54,9 +54,18 @@ public class LlmController {
         }
     }
 
+    // Bash (String): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete?type=string"
+    // Bash (Conversation): curl -X POST -H "Content-Type: application/json" -d '{"systemPrompt":"your-system-prompt","messages":[{"role":"User","content":"your-message"}, {...}, {...}]}' "http://localhost:8080/api/v1/complete?type=conversation"
+    // Bash (Also string): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete"
     @PostMapping("/complete")
-    public Flux<String> completeChat(@RequestBody Object input) {
-        return llamaApp.completeText(input);
+    public Flux<String> completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
+        if (type == null || Objects.equals(type.toLowerCase(), "string")) {
+            return llamaApp.completeString((String) input);
+        } else if (Objects.equals(type.toLowerCase(), "conversation")) {
+            return llamaApp.completeConversation((Conversation) input);
+        } else {
+            return Flux.error(new IllegalArgumentException("Invalid type: " + type));
+        }
     }
 
     @PutMapping("/edit/{convId}/{msgIndex}")
