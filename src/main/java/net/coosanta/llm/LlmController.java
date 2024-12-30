@@ -115,6 +115,22 @@ public class LlmController {
         return ResponseEntity.ok(title);
     }
 
+    @PostMapping("/completion-title")
+    public ResponseEntity<String> setTitleCompletion(@RequestBody Conversation completion) {
+
+        if (completion.getMessages().isEmpty()) {
+            return ResponseEntity.badRequest().body("Cannot generate title, conversation is empty!");
+        }
+
+        CompletableFuture<String> futureTitle = CompletableFuture.supplyAsync(() -> {
+            String generatedTitle = llamaApp.generateTitle(completion);
+            completion.setTitle(generatedTitle);
+            return generatedTitle;
+        });
+        String title = futureTitle.join();
+        return ResponseEntity.ok(title);
+    }
+
     @PutMapping("/ignore/{convId}/{msgIndex}")
     public ResponseEntity<?> ignoreMessage(
             @PathVariable String convId,
