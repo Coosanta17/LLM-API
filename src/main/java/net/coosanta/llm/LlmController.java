@@ -32,6 +32,11 @@ public class LlmController {
         }
     }
 
+    @RequestMapping(value = "/test", method = RequestMethod.OPTIONS)
+    public ResponseEntity<Void> testOptions() {
+        return ResponseEntity.ok().build();
+    }
+
     // Bash: curl -H "Content-Type: application/json" -d 'You are a helpful and knowledgeable assistant.' http://localhost:8080/api/v1/initiate
     @PostMapping("/initiate")
     public ResponseEntity<Map<String, String>> startConversation(@RequestBody String systemPrompt) throws IOException {

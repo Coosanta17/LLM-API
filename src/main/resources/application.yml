@@ -15,6 +15,7 @@ cors:
   allowed-origins:
     - http://localhost
     - https://chat.coosanta.net # Just to make my own website easier to configure, you can remove this.
+    - https://chat.coosanta.net/*
   allowed-methods:
     - GET
     - POST
