@@ -7,10 +7,7 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static net.coosanta.llm.ConversationUtils.*;
@@ -62,10 +59,26 @@ public class LlmController {
         if (type == null || Objects.equals(type.toLowerCase(), "string")) {
             return llamaApp.completeString((String) input);
         } else if (Objects.equals(type.toLowerCase(), "conversation")) {
-            return llamaApp.completeConversation((Conversation) input);
+            Conversation conversation = convertToConversation(input);
+            return llamaApp.completeConversation(conversation);
         } else {
             return Flux.error(new IllegalArgumentException("Invalid type: " + type));
         }
+    }
+
+    private Conversation convertToConversation(Object input) {
+        if (input instanceof Map<?, ?> map) {
+            if (map.keySet().stream().allMatch(key -> key instanceof String)) {
+                @SuppressWarnings("unchecked")
+                LinkedHashMap<String, Object> castedMap = (LinkedHashMap<String, Object>) map;
+                return new Conversation(castedMap);
+            }
+        } else if (input instanceof Conversation) {
+            return (Conversation) input;
+        } else {
+            throw new IllegalArgumentException("Invalid input type for conversation");
+        }
+        return null;
     }
 
     @PutMapping("/edit/{convId}/{msgIndex}")

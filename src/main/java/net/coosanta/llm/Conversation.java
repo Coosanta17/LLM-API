@@ -2,9 +2,7 @@ package net.coosanta.llm;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Conversation {
     private final UUID uuid;
@@ -27,6 +25,25 @@ public class Conversation {
         this.title = conversation.getTitle();
         this.messages = conversation.getMessages();
         this.totalTokenLength = conversation.getTotalTokenLength();
+    }
+
+    public Conversation(LinkedHashMap<String, Object> map) {
+        this.uuid = map.get("uuid") != null ? UUID.fromString((String) map.get("uuid")) : null;
+        this.systemPrompt = Objects.requireNonNull((String) map.get("systemPrompt"), "systemPrompt cannot be null");
+        this.title = (String) map.get("title");
+        this.messages = new ArrayList<>();
+
+        @SuppressWarnings("unchecked")
+        List<LinkedHashMap<String, Object>> messagesMap = (List<LinkedHashMap<String, Object>>) map.get("messages");
+
+        for (LinkedHashMap<String, Object> messageMap : messagesMap) {
+            this.messages.add(new Message(
+                    Objects.requireNonNull((String) messageMap.get("role"), "role cannot be null"),
+                    Objects.requireNonNull((String) messageMap.get("content"), "content cannot be null"),
+                    (Integer) messageMap.get("tokenLength")
+            ));
+        }
+        this.totalTokenLength = (Integer) map.get("totalTokenLength");
     }
 
     public String getSystemPrompt() {
