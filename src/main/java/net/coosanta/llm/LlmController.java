@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import static net.coosanta.llm.ConversationUtils.*;
 
 // Ignore IDE warnings about these classes, they are used and are quite important!
-//@CrossOrigin(origins = "*", allowedHeaders = "*")
+@CrossOrigin(origins = "*", allowedHeaders = "*") // Other methods to allow Cors didn't work so I am covering eveything for now.
 @RestController
 @RequestMapping("/api/v1/")
 public class LlmController {
