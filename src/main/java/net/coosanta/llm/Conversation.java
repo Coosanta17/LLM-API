@@ -43,7 +43,7 @@ public class Conversation {
                     (Integer) messageMap.get("tokenLength")
             ));
         }
-        this.totalTokenLength = (Integer) map.get("totalTokenLength");
+        this.totalTokenLength = map.get("totalTokenLength") != null ? (Integer) map.get("totalTokenLength") : 0;
     }
 
     public String getSystemPrompt() {
