@@ -2,9 +2,36 @@ server:
   # Port to run api from
   port: 8080
 
+  forward-headers-strategy: native
+
+  # HTTP redirect. Not necessary but I include it here (commented out) anyway.
+#  tomcat:
+#    additional-connectors:
+#      port: 8080
+#      protocol: HTTP/1.1
+#      redirect-to-https: true
+
 spring:
   application:
     name: LLM-API
+
+  # Uncomment either jks or pem depending on the certificate type. Don't do both!
+  # TODO: Test https
+#  ssl:
+#    bundle:
+#      jks:
+#        mybundle:
+#          key:
+#            alias: "application"
+#          keystore:
+#            location: "classpath:application.p12"
+#            password: "secret"
+#            type: "PKCS12"
+#      pem:
+#        mybundle:
+#          keystore:
+#            certificate: "classpath:application.crt"
+#            private-key: "classpath:application.key"
 
 app:
   # File path where conversations are stored relative to project root.
@@ -24,7 +51,7 @@ app:
     # remember more of the conversation but will use more RAM.
     # Llama.cpp default 512 (model might be a bit forgetful).
     # Set to 0 to load model default (might use too much ram)
-    context: 1024
+    context: 512
 
     # How many threads the model uses. The more threads the faster
     # the model responds. However, this can result in other
@@ -42,7 +69,7 @@ app:
     # Whether to load the model on application startup or not.
     # If false, the model will only load once `/chat` is called from api.
     # Loading on startup will decrease the time the model responds on the
-    # first `/chat` that the application receives at the cost of more
+    # first `/chat` the application receives at the cost of more
     # background resource use (especially RAM).
     # Inactivity timeouts still apply, which means if the model doesn't do anything for
     # the configured time since start it will still unload the model.
