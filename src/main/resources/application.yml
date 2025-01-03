@@ -11,6 +11,19 @@ server:
 #      protocol: HTTP/1.1
 #      redirect-to-https: true
 
+cors:
+  allowed-origins:
+    - http://localhost
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Content-Type
+  allow-credentials: false
+
 spring:
   application:
     name: LLM-API
