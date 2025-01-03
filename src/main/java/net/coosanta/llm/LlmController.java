@@ -32,7 +32,7 @@ public class LlmController {
         }
     }
 
-    @RequestMapping(value = "/test", method = RequestMethod.OPTIONS)
+    @RequestMapping(value = "", method = RequestMethod.OPTIONS)
     public ResponseEntity<Void> testOptions() {
         return ResponseEntity.ok().build();
     }
