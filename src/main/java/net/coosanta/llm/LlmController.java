@@ -48,6 +48,7 @@ public class LlmController {
     }
 
     // Bash: curl -H "Content-Type: application/json" -d '{"prompt":"your-prompt-here"}' http://localhost:8080/api/v1/chat/your-uuid-here
+    // TODO: FIX EMPTY RESPONSES
     @PostMapping(value = "/chat/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamChat(@PathVariable String id, @RequestBody String prompt) {
         try {
@@ -60,7 +61,7 @@ public class LlmController {
     // Bash (String): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete?type=string"
     // Bash (Conversation): curl -X POST -H "Content-Type: application/json" -d '{"systemPrompt":"your-system-prompt","messages":[{"role":"User","content":"your-message"}, {...}, {...}]}' "http://localhost:8080/api/v1/complete?type=conversation"
     // Bash (Also string): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete"
-    @PostMapping("/complete")
+    @PostMapping(value = "/complete", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
         if (type == null || Objects.equals(type.toLowerCase(), "string")) {
             return llamaApp.completeString((String) input);
