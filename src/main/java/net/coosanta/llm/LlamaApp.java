@@ -116,9 +116,6 @@ public class LlamaApp {
     public Flux<String> completeConversation(Conversation input) {
         InferenceParameters incomplete = generateInferenceParameters(input);
 
-        // debug
-        System.out.println(incomplete);
-
         return getCompletionFlux(incomplete);
     }
 
@@ -222,7 +219,7 @@ public class LlamaApp {
         StringBuilder generatedContext = new StringBuilder();
 
         // Adds system prompt to context
-        generatedContext.append(conversation.getSystemPrompt());
+        generatedContext.append(formatMessage("System", conversation.getSystemPrompt()));
 
         for (Message message : conversation.getMessages()) {
             if (message.isIgnored()) continue;

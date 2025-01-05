@@ -65,13 +65,7 @@ public class LlmController {
         if (type == null || Objects.equals(type.toLowerCase(), "string")) {
             return llamaApp.completeString((String) input);
         } else if (Objects.equals(type.toLowerCase(), "conversation")) {
-            //debug
-            System.out.println("hash input: " + input);
-
             Conversation conversation = convertToConversation(input);
-
-            System.out.println("conversation object output: " + conversation);
-
             return llamaApp.completeConversation(conversation);
         } else {
             return Flux.error(new IllegalArgumentException("Invalid type: " + type));
