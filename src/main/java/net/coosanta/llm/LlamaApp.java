@@ -116,6 +116,9 @@ public class LlamaApp {
     public Flux<String> completeConversation(Conversation input) {
         InferenceParameters incomplete = generateInferenceParameters(input);
 
+        // debug
+        System.out.println(incomplete);
+
         return getCompletionFlux(incomplete);
     }
 
