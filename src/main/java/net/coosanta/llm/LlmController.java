@@ -64,21 +64,26 @@ public class LlmController {
     // Bash (Also string): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete"
     @PostMapping(value = "/complete", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
+        Flux<String> acknowledgment = Flux.just("event: generating\n\n");
+
+        Flux<String> response;
         if (type == null || Objects.equals(type.toLowerCase(), "string")) {
-            return llamaApp.completeString((String) input)
+            response = llamaApp.completeString((String) input)
                     .mergeWith(pingStream()); // Add pings to keep the connection alive
         } else if (Objects.equals(type.toLowerCase(), "conversation")) {
             System.out.println("Input conversation HashMap:\n" + input + "\n\n"); // Debug
             Conversation conversation = convertToConversation(input);
 
             assert conversation != null;
-            System.out.println("Converted Conversation: \n"+conversation.toMap()+"\n\n");
+            System.out.println("Converted Conversation: \n" + conversation.toMap() + "\n\n");
 
-            return llamaApp.completeConversation(conversation)
+            response = llamaApp.completeConversation(conversation)
                     .mergeWith(pingStream());
         } else {
             return Flux.error(new IllegalArgumentException("Invalid type: " + type));
         }
+
+        return Flux.concat(acknowledgment, response);
     }
 
     // Ping Stream to Keep Connection Alive
