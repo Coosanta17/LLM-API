@@ -67,12 +67,19 @@ app:
     # Path to the gguf file relative to project root. Uses placeholder llama.gguf for now.
     path: ./models/llama.gguf
 
-    # How much "memory" the model has.
+    # How much "memory" the model has in tokens.
     # Higher number will result in the model being able to
     # remember more of the conversation but will use more RAM.
     # Llama.cpp default 512 (model might be a bit forgetful and will struggle on long responses).
     # Set to 0 to load model default (might use too much ram)
-    context: 1024
+    context: 700
+
+    # How many token the model generates each response.
+    # It is not recommended to have the number higher than context as this can result
+    # in weird responses (endless repetition of the same token)
+    # Set to -1 for infinity
+    # Set to -2 for until context filled (for some reason this doesn't work for me)
+    response-limit: 600
 
     # How many threads the model uses. The more threads the faster
     # the model responds. However, this can result in other

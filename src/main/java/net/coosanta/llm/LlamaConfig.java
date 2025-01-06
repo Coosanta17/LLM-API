@@ -40,6 +40,7 @@ public class LlamaConfig {
     public static class ModelConfig {
         private String path;
         private int context;
+        private int responseLimit;
         private int threads;
         private int gpuLayers;
         private int inactivityTimeout;
@@ -59,6 +60,14 @@ public class LlamaConfig {
 
         public void setContext(int context) {
             this.context = context;
+        }
+
+        public int getResponseLimit() {
+            return this.responseLimit;
+        }
+
+        public void setResponseLimit(int responseLimit) {
+            this.responseLimit = responseLimit;
         }
 
         public int getThreads() {

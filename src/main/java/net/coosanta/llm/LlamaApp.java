@@ -190,12 +190,13 @@ public class LlamaApp {
     }
 
     private LlamaModel initializeModel(String modelPath) {
+        final LlamaConfig.ModelConfig modelSettings = settings.getModelSettings();
         ModelParameters modelParams = new ModelParameters()
                 .setModelFilePath(modelPath)
-                .setNGpuLayers(settings.getModelSettings().getGpuLayers())
-                .setNCtx(settings.getModelSettings().getContext())
-                .setNThreads(settings.getModelSettings().getThreads())
-                .setNPredict(768);
+                .setNGpuLayers(modelSettings.getGpuLayers())
+                .setNCtx(modelSettings.getContext())
+                .setNThreads(modelSettings.getThreads())
+                .setNPredict(modelSettings.getResponseLimit());
 
         return new LlamaModel(modelParams);
     }
