@@ -204,7 +204,8 @@ public class LlamaApp {
                 .setTemperature(0.7f)
                 .setPenalizeNl(true)
                 .setMiroStat(MiroStat.V2)
-                .setStopStrings("<|eot_id|>");
+                .setStopStrings("<|eot_id|>")
+                .setNPredict(-2); // Writes until context full.
     }
 
     private static InferenceParameters generateStringInferenceParameters(String input) {

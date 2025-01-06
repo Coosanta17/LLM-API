@@ -60,7 +60,7 @@ app:
 
   # Maximum amount of conversations to store in memory.
   # Lower values may increase disk activity but reduce memory usage (small impact)
-  loaded-conversations-limit: 100
+  loaded-conversations-limit: 100 # TODO: FIX!
 
 
   model:
@@ -70,9 +70,9 @@ app:
     # How much "memory" the model has.
     # Higher number will result in the model being able to
     # remember more of the conversation but will use more RAM.
-    # Llama.cpp default 512 (model might be a bit forgetful).
+    # Llama.cpp default 512 (model might be a bit forgetful and will struggle on long responses).
     # Set to 0 to load model default (might use too much ram)
-    context: 512
+    context: 1024
 
     # How many threads the model uses. The more threads the faster
     # the model responds. However, this can result in other
