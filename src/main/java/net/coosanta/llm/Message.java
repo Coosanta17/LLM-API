@@ -1,5 +1,7 @@
 package net.coosanta.llm;
 
+import java.util.HashMap;
+
 public class Message {
     private String role;
     private String content;
@@ -42,5 +44,15 @@ public class Message {
 
     public void setIgnored(boolean ignore) {
         this.ignored = ignore;
+    }
+
+    // Debug method
+    public HashMap<String, Object> toMap() {
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("role", this.role);
+        map.put("content", this.content);
+        map.put("tokenLength", this.tokenLength);
+        map.put("ignored", this.ignored);
+        return map;
     }
 }

@@ -3,6 +3,7 @@ package net.coosanta.llm;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Conversation {
     private final UUID uuid;
@@ -96,6 +97,17 @@ public class Conversation {
 
     public void setTotalTokenLength(int totalTokenLength) {
         this.totalTokenLength = totalTokenLength;
+    }
+
+    // Debug method
+    public HashMap<String, Object> toMap() {
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("uuid", this.uuid.toString());
+        map.put("systemPrompt", this.systemPrompt);
+        map.put("title", this.title);
+        map.put("messages", this.messages.stream().map(Message::toMap).collect(Collectors.toList()));
+        map.put("totalTokenLength", this.totalTokenLength);
+        return map;
     }
 }
 

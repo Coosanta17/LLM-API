@@ -7,6 +7,7 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -64,14 +65,29 @@ public class LlmController {
     @PostMapping(value = "/complete", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
         if (type == null || Objects.equals(type.toLowerCase(), "string")) {
-            return llamaApp.completeString((String) input);
+            return llamaApp.completeString((String) input)
+                    .mergeWith(pingStream()); // Add pings to keep the connection alive
         } else if (Objects.equals(type.toLowerCase(), "conversation")) {
-            System.out.println("Input conversation HasMap:\n"+input+"\n\n"); // debug
+            System.out.println("Input conversation HashMap:\n" + input + "\n\n"); // Debug
             Conversation conversation = convertToConversation(input);
-            return llamaApp.completeConversation(conversation);
+
+            assert conversation != null;
+            System.out.println("Converted Conversation: \n"+conversation.toMap()+"\n\n");
+
+            return llamaApp.completeConversation(conversation)
+                    .mergeWith(pingStream());
         } else {
             return Flux.error(new IllegalArgumentException("Invalid type: " + type));
         }
+    }
+
+    // Ping Stream to Keep Connection Alive
+    private Flux<String> pingStream() {
+        if (!settings.getSsePing()) {
+            return Flux.empty();
+        }
+        return Flux.interval(Duration.ofSeconds(settings.getPingInterval()))
+                .map(i -> "event: ping\n\n");
     }
 
     private Conversation convertToConversation(Object input) {

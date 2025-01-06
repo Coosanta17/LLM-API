@@ -62,12 +62,19 @@ app:
   # Lower values may increase disk activity but reduce memory usage (small impact)
   loaded-conversations-limit: 100 # TODO: FIX!
 
+  # Whether to ping the client regularly to prevent it from timing out. Especially useful
+  # on slow hardware and/or large models and/or large context.
+  sse-ping: true
+
+  # Interval in seconds to send ping
+  ping-interval: 10
+
 
   model:
     # Path to the gguf file relative to project root. Uses placeholder llama.gguf for now.
     path: ./models/llama.gguf
 
-    # How much "memory" the model has in tokens.
+    # How much context the model can store in tokens.
     # Higher number will result in the model being able to
     # remember more of the conversation but will use more RAM.
     # Llama.cpp default 512 (model might be a bit forgetful and will struggle on long responses).
@@ -84,7 +91,7 @@ app:
     # How many threads the model uses. The more threads the faster
     # the model responds. However, this can result in other
     # applications being impacted due to less resources.
-    threads: 6
+    threads: 3
 
     # Set the number of layers to store in VRAM (use default: -1)
     gpu-layers: -1

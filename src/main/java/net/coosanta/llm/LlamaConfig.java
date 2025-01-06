@@ -9,6 +9,9 @@ public class LlamaConfig {
     private String conversationPath;
     private int buffer;
     private int loadedConversationsLimit;
+    private boolean ssePing;
+    private int pingInterval;
+
     private ModelConfig model = new ModelConfig();
 
     public String getConversationPath() {
@@ -34,6 +37,22 @@ public class LlamaConfig {
 
     public void setLoadedConversationsLimit(int loadedConversationsLimit) {
         this.loadedConversationsLimit = loadedConversationsLimit;
+    }
+
+    public boolean getSsePing() {
+        return this.ssePing;
+    }
+
+    public void setSsePing(boolean ssePing) {
+        this.ssePing = ssePing;
+    }
+
+    public int getPingInterval() {
+        return this.pingInterval;
+    }
+
+    public void setPingInterval(int pingInterval) {
+        this.pingInterval = pingInterval;
     }
 
 
