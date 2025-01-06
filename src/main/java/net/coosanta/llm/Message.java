@@ -51,8 +51,6 @@ public class Message {
         HashMap<String, Object> map = new HashMap<>();
         map.put("role", this.role);
         map.put("content", this.content);
-        map.put("tokenLength", this.tokenLength);
-        map.put("ignored", this.ignored);
         return map;
     }
 }

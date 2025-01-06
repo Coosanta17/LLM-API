@@ -102,11 +102,9 @@ public class Conversation {
     // Debug method
     public HashMap<String, Object> toMap() {
         HashMap<String, Object> map = new HashMap<>();
-        map.put("uuid", this.uuid.toString());
         map.put("systemPrompt", this.systemPrompt);
         map.put("title", this.title);
         map.put("messages", this.messages.stream().map(Message::toMap).collect(Collectors.toList()));
-        map.put("totalTokenLength", this.totalTokenLength);
         return map;
     }
 }
