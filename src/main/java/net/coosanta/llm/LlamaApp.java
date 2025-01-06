@@ -194,7 +194,8 @@ public class LlamaApp {
                 .setModelFilePath(modelPath)
                 .setNGpuLayers(settings.getModelSettings().getGpuLayers())
                 .setNCtx(settings.getModelSettings().getContext())
-                .setNThreads(settings.getModelSettings().getThreads());
+                .setNThreads(settings.getModelSettings().getThreads())
+                .setNPredict(-2);
 
         return new LlamaModel(modelParams);
     }
@@ -204,8 +205,7 @@ public class LlamaApp {
                 .setTemperature(0.7f)
                 .setPenalizeNl(true)
                 .setMiroStat(MiroStat.V2)
-                .setStopStrings("<|eot_id|>")
-                .setNPredict(-2); // Writes until context full.
+                .setStopStrings("<|eot_id|>");
     }
 
     private static InferenceParameters generateStringInferenceParameters(String input) {
