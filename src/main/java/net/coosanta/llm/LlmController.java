@@ -66,6 +66,7 @@ public class LlmController {
         if (type == null || Objects.equals(type.toLowerCase(), "string")) {
             return llamaApp.completeString((String) input);
         } else if (Objects.equals(type.toLowerCase(), "conversation")) {
+            System.out.println("Input conversation HasMap:\n"+input+"\n\n"); // debug
             Conversation conversation = convertToConversation(input);
             return llamaApp.completeConversation(conversation);
         } else {
