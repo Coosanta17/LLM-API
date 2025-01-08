@@ -1,23 +1,16 @@
 package net.coosanta.llm;
 
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static net.coosanta.llm.ConversationUtils.*;
 
@@ -71,32 +64,56 @@ public class LlmController {
     // Bash (Conversation): curl -X POST -H "Content-Type: application/json" -d '{"systemPrompt":"your-system-prompt","messages":[{"role":"User","content":"your-message"}, {...}, {...}]}' "http://localhost:8080/api/v1/complete?type=conversation"
     // Bash (Also string): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete"
     @PostMapping(value = "/complete", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<DataBuffer> completeChat(@RequestParam(required = false) String type,
-                                         @RequestBody Object input) {
+    public SseEmitter completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
+        SseEmitter emitter = new SseEmitter();
 
-        return Flux.concat(
-                Flux.just("event: generating\n\n"),
-                buildResponse(type, input),
-                pingStream()
-        ).map(this::toBuffer);
-    }
+        // Acknowledgment stream (initial response)
+        try {
+            emitter.send(SseEmitter.event()
+                    .data("generating")
+                    .name("acknowledgment"));
 
-    private Flux<String> buildResponse(String type, Object input) {
-        if (type == null || Objects.equals(type.toLowerCase(), "string")) {
-            return llamaApp.completeString((String) input)
-                    .map(data -> "data: " + data + "\n\n");
-        } else if (Objects.equals(type.toLowerCase(), "conversation")) {
-            Conversation conversation = convertToConversation(input);
+            Flux<String> response;
 
-            if (conversation == null) {
-                return Flux.error(new IllegalArgumentException("Invalid conversation input"));
+            if (type == null || Objects.equals(type.toLowerCase(), "string")) {
+                response = llamaApp.completeString((String) input)
+                        .mergeWith(pingStream())
+                        .map(data -> data);
+            } else if (Objects.equals(type.toLowerCase(), "conversation")) {
+                System.out.println("Input conversation HashMap:\n" + input + "\n\n"); // Debug
+                Conversation conversation = convertToConversation(input);
+
+                assert conversation != null;
+                System.out.println("Converted Conversation: \n" + conversation.toMap() + "\n\n");
+
+                response = llamaApp.completeConversation(conversation)
+                        .mergeWith(pingStream())
+                        .map(data -> data);
+            } else {
+                emitter.completeWithError(new IllegalArgumentException("Invalid type: " + type));
+                return emitter;
             }
 
-            return llamaApp.completeConversation(conversation)
-                    .map(data -> "data: " + data + "\n\n");
-        } else {
-            return Flux.error(new IllegalArgumentException("Invalid type: " + type));
+            // Send response stream
+            response.subscribe(
+                    data -> {
+                        try {
+                            emitter.send(SseEmitter.event()
+                                    .data(data)
+                                    .name("data"));
+                        } catch (Exception e) {
+                            emitter.completeWithError(e);
+                        }
+                    },
+                    emitter::completeWithError,
+                    emitter::complete
+            );
+
+        } catch (Exception e) {
+            emitter.completeWithError(e);
         }
+
+        return emitter;
     }
 
     private Flux<String> pingStream() {
@@ -104,11 +121,7 @@ public class LlmController {
             return Flux.empty();
         }
         return Flux.interval(Duration.ofSeconds(settings.getPingInterval()))
-                .map(i -> "event: ping\n\n");
-    }
-
-    private DataBuffer toBuffer(String message) {
-        return new DefaultDataBufferFactory().wrap(message.getBytes(StandardCharsets.UTF_8));
+                .map(i -> "ping");
     }
 
     private Conversation convertToConversation(Object input) {
@@ -225,45 +238,5 @@ public class LlmController {
             return ResponseEntity.badRequest().body("Failed to load conversation with id: " + id);
         }
     }
-
-    // debug
-    @GetMapping(path = "/stream-flux", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamFlux() {
-        return Flux.interval(Duration.ofSeconds(1))
-                .map(sequence -> "Flux - " + LocalTime.now().toString());
-    }
-
-    @GetMapping("/stream-sse")
-    public Flux<ServerSentEvent<String>> streamEvents() {
-        return Flux.interval(Duration.ofSeconds(1))
-                .map(sequence -> ServerSentEvent.<String> builder()
-                        .id(String.valueOf(sequence))
-                        .event("periodic-event")
-                        .data("SSE - " + LocalTime.now().toString())
-                        .build());
-    }
-
-    @GetMapping("/stream-sse-mvc")
-    public SseEmitter streamSseMvc() {
-        SseEmitter emitter = new SseEmitter();
-        ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
-        sseMvcExecutor.execute(() -> {
-            try {
-                for (int i = 0; true; i++) {
-                    SseEmitter.SseEventBuilder event = SseEmitter.event()
-                            .data("SSE MVC - " + LocalTime.now().toString())
-                            .id(String.valueOf(i))
-                            .name("sse event - mvc");
-                    emitter.send(event);
-                    Thread.sleep(1000);
-                }
-            } catch (Exception ex) {
-                emitter.completeWithError(ex);
-            }
-        });
-        return emitter;
-    }
-
-
 
 }
