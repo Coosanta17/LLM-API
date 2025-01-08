@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static net.coosanta.llm.ConversationUtils.*;
 
@@ -64,7 +67,7 @@ public class LlmController {
     // Bash (Also string): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete"
     @PostMapping(value = "/complete", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
-        SseEmitter emitter = new SseEmitter();
+        SseEmitter emitter = new SseEmitter(0L);
 
         try {
             emitter.send(SseEmitter.event()
@@ -101,16 +104,16 @@ public class LlmController {
                     emitter::complete
             );
 
-            new Thread(() -> {
-                try {
-                    while (true) {
-                        Thread.sleep(10000);
+            if (settings.getSsePing()) {
+                ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+                scheduler.schedule(() -> {
+                    try {
                         emitter.send(SseEmitter.event().name("ping"));
+                    } catch (Exception e) {
+                        emitter.completeWithError(e);
                     }
-                } catch (Exception e) {
-                    emitter.completeWithError(e);
-                }
-            }).start();
+                }, settings.getPingInterval(), TimeUnit.SECONDS);
+            }
 
         } catch (Exception e) {
             emitter.completeWithError(e);
