@@ -69,6 +69,8 @@ public class LlmController {
     public SseEmitter completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
         SseEmitter emitter = new SseEmitter(0L);
 
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
         try {
             emitter.send(SseEmitter.event()
                     .name("generating"));
@@ -101,11 +103,13 @@ public class LlmController {
                         }
                     },
                     emitter::completeWithError,
-                    emitter::complete
+                    () -> {
+                        scheduler.close();
+                        emitter.complete();
+                    }
             );
 
             if (settings.getSsePing()) {
-                ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
                 scheduler.scheduleAtFixedRate(() -> {
                     try {
                         emitter.send(SseEmitter.event().name("ping"));
