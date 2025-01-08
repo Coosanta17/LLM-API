@@ -106,13 +106,13 @@ public class LlmController {
 
             if (settings.getSsePing()) {
                 ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-                scheduler.schedule(() -> {
+                scheduler.scheduleAtFixedRate(() -> {
                     try {
                         emitter.send(SseEmitter.event().name("ping"));
                     } catch (Exception e) {
                         emitter.completeWithError(e);
                     }
-                }, settings.getPingInterval(), TimeUnit.SECONDS);
+                }, settings.getPingInterval(), settings.getPingInterval(), TimeUnit.SECONDS);
             }
 
         } catch (Exception e) {
