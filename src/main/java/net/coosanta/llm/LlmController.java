@@ -67,11 +67,9 @@ public class LlmController {
     public SseEmitter completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
         SseEmitter emitter = new SseEmitter();
 
-        // Acknowledgment stream (initial response)
         try {
             emitter.send(SseEmitter.event()
-                    .data("generating")
-                    .name("acknowledgment"));
+                    .name("generating"));
 
             Flux<String> response;
 
@@ -99,8 +97,7 @@ public class LlmController {
                     data -> {
                         try {
                             emitter.send(SseEmitter.event()
-                                    .data(data)
-                                    .name("data"));
+                                    .data(data));
                         } catch (Exception e) {
                             emitter.completeWithError(e);
                         }
