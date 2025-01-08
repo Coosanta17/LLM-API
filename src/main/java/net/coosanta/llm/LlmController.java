@@ -64,12 +64,13 @@ public class LlmController {
     // Bash (Also string): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete"
     @PostMapping(value = "/complete", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
-        Flux<String> acknowledgment = Flux.just("event: generating\n\n");
+        Flux<String> acknowledgment = Flux.just(formatEvent("event", "generating"));
 
         Flux<String> response;
         if (type == null || Objects.equals(type.toLowerCase(), "string")) {
             response = llamaApp.completeString((String) input)
-                    .mergeWith(pingStream()); // Add pings to keep the connection alive
+                    .mergeWith(pingStream())
+                    .map(data -> formatEvent("data", data));
         } else if (Objects.equals(type.toLowerCase(), "conversation")) {
             System.out.println("Input conversation HashMap:\n" + input + "\n\n"); // Debug
             Conversation conversation = convertToConversation(input);
@@ -78,7 +79,8 @@ public class LlmController {
             System.out.println("Converted Conversation: \n" + conversation.toMap() + "\n\n");
 
             response = llamaApp.completeConversation(conversation)
-                    .mergeWith(pingStream());
+                    .mergeWith(pingStream())
+                    .map(data -> formatEvent("data", data));
         } else {
             return Flux.error(new IllegalArgumentException("Invalid type: " + type));
         }
@@ -86,13 +88,16 @@ public class LlmController {
         return Flux.concat(acknowledgment, response);
     }
 
-    // Ping Stream to Keep Connection Alive
+    private String formatEvent(String field, String value) {
+        return field + ": " + value + "\n\n"; // Properly formatted SSE message
+    }
+
     private Flux<String> pingStream() {
         if (!settings.getSsePing()) {
             return Flux.empty();
         }
         return Flux.interval(Duration.ofSeconds(settings.getPingInterval()))
-                .map(i -> "event: ping\n\n");
+                .map(i -> formatEvent("event", "ping"));
     }
 
     private Conversation convertToConversation(Object input) {
