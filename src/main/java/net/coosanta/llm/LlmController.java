@@ -4,11 +4,8 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -69,21 +66,14 @@ public class LlmController {
     // Bash (Conversation): curl -X POST -H "Content-Type: application/json" -d '{"systemPrompt":"your-system-prompt","messages":[{"role":"User","content":"your-message"}, {...}, {...}]}' "http://localhost:8080/api/v1/complete?type=conversation"
     // Bash (Also string): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete"
     @PostMapping(value = "/complete", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<Void> completeChat(@RequestParam(required = false) String type,
-                                   @RequestBody Object input,
-                                   ServerWebExchange exchange) {
+    public Flux<DataBuffer> completeChat(@RequestParam(required = false) String type,
+                                         @RequestBody Object input) {
 
-        ServerHttpResponse response = exchange.getResponse();
-
-        response.getHeaders().setContentType(MediaType.TEXT_EVENT_STREAM);
-
-        return response.writeWith(
-                Flux.concat(
-                        Flux.just("event: generating\n\n"),
-                        buildResponse(type, input),
-                        pingStream()
-                ).map(this::toBuffer)
-        );
+        return Flux.concat(
+                Flux.just("event: generating\n\n"),
+                buildResponse(type, input),
+                pingStream()
+        ).map(this::toBuffer);
     }
 
     private Flux<String> buildResponse(String type, Object input) {
