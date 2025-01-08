@@ -8,9 +8,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Logger;
 
 // Static methods to do actions to conversations.
@@ -75,6 +73,21 @@ public class ConversationUtils {
         }
 
         return conversations;
+    }
+
+    public static Conversation convertToConversation(Object input) {
+        if (input instanceof Map<?, ?> map) {
+            if (map.keySet().stream().allMatch(key -> key instanceof String)) {
+                @SuppressWarnings("unchecked")
+                LinkedHashMap<String, Object> castedMap = (LinkedHashMap<String, Object>) map;
+                return new Conversation(castedMap);
+            }
+        } else if (input instanceof Conversation) {
+            return (Conversation) input;
+        } else {
+            throw new IllegalArgumentException("Invalid input type for conversation");
+        }
+        return null;
     }
 
 }

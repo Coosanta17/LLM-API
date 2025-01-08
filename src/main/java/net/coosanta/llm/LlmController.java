@@ -8,7 +8,6 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -74,9 +73,7 @@ public class LlmController {
             Flux<String> response;
 
             if (type == null || Objects.equals(type.toLowerCase(), "string")) {
-                response = llamaApp.completeString((String) input)
-                        .mergeWith(pingStream())
-                        .map(data -> data);
+                response = llamaApp.completeString((String) input);
             } else if (Objects.equals(type.toLowerCase(), "conversation")) {
                 System.out.println("Input conversation HashMap:\n" + input + "\n\n"); // Debug
                 Conversation conversation = convertToConversation(input);
@@ -84,9 +81,7 @@ public class LlmController {
                 assert conversation != null;
                 System.out.println("Converted Conversation: \n" + conversation.toMap() + "\n\n");
 
-                response = llamaApp.completeConversation(conversation)
-                        .mergeWith(pingStream())
-                        .map(data -> data);
+                response = llamaApp.completeConversation(conversation);
             } else {
                 emitter.completeWithError(new IllegalArgumentException("Invalid type: " + type));
                 return emitter;
@@ -106,34 +101,22 @@ public class LlmController {
                     emitter::complete
             );
 
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        Thread.sleep(10000);
+                        emitter.send(SseEmitter.event().name("ping"));
+                    }
+                } catch (Exception e) {
+                    emitter.completeWithError(e);
+                }
+            }).start();
+
         } catch (Exception e) {
             emitter.completeWithError(e);
         }
 
         return emitter;
-    }
-
-    private Flux<String> pingStream() {
-        if (!settings.getSsePing()) {
-            return Flux.empty();
-        }
-        return Flux.interval(Duration.ofSeconds(settings.getPingInterval()))
-                .map(i -> "ping");
-    }
-
-    private Conversation convertToConversation(Object input) {
-        if (input instanceof Map<?, ?> map) {
-            if (map.keySet().stream().allMatch(key -> key instanceof String)) {
-                @SuppressWarnings("unchecked")
-                LinkedHashMap<String, Object> castedMap = (LinkedHashMap<String, Object>) map;
-                return new Conversation(castedMap);
-            }
-        } else if (input instanceof Conversation) {
-            return (Conversation) input;
-        } else {
-            throw new IllegalArgumentException("Invalid input type for conversation");
-        }
-        return null;
     }
 
     @PutMapping("/edit/{convId}/{msgIndex}")
