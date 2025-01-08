@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -70,7 +71,9 @@ public class LlmController {
     @PostMapping(value = "/complete", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Mono<Void> completeChat(@RequestParam(required = false) String type,
                                    @RequestBody Object input,
-                                   ServerHttpResponse response) {
+                                   ServerWebExchange exchange) {
+
+        ServerHttpResponse response = exchange.getResponse();
 
         response.getHeaders().setContentType(MediaType.TEXT_EVENT_STREAM);
 
@@ -82,7 +85,6 @@ public class LlmController {
                 ).map(this::toBuffer)
         );
     }
-
 
     private Flux<String> buildResponse(String type, Object input) {
         if (type == null || Objects.equals(type.toLowerCase(), "string")) {
