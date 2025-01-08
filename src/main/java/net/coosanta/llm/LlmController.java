@@ -1,11 +1,16 @@
 package net.coosanta.llm;
 
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
@@ -63,33 +68,38 @@ public class LlmController {
     // Bash (Conversation): curl -X POST -H "Content-Type: application/json" -d '{"systemPrompt":"your-system-prompt","messages":[{"role":"User","content":"your-message"}, {...}, {...}]}' "http://localhost:8080/api/v1/complete?type=conversation"
     // Bash (Also string): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete"
     @PostMapping(value = "/complete", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
-        Flux<String> acknowledgment = Flux.just(formatEvent("event", "generating"));
+    public Mono<Void> completeChat(@RequestParam(required = false) String type,
+                                   @RequestBody Object input,
+                                   ServerHttpResponse response) {
 
-        Flux<String> response;
+        response.getHeaders().setContentType(MediaType.TEXT_EVENT_STREAM);
+
+        return response.writeWith(
+                Flux.concat(
+                        Flux.just("event: generating\n\n"),
+                        buildResponse(type, input),
+                        pingStream()
+                ).map(this::toBuffer)
+        );
+    }
+
+
+    private Flux<String> buildResponse(String type, Object input) {
         if (type == null || Objects.equals(type.toLowerCase(), "string")) {
-            response = llamaApp.completeString((String) input)
-                    .mergeWith(pingStream())
-                    .map(data -> formatEvent("data", data));
+            return llamaApp.completeString((String) input)
+                    .map(data -> "data: " + data + "\n\n");
         } else if (Objects.equals(type.toLowerCase(), "conversation")) {
-            System.out.println("Input conversation HashMap:\n" + input + "\n\n"); // Debug
             Conversation conversation = convertToConversation(input);
 
-            assert conversation != null;
-            System.out.println("Converted Conversation: \n" + conversation.toMap() + "\n\n");
+            if (conversation == null) {
+                return Flux.error(new IllegalArgumentException("Invalid conversation input"));
+            }
 
-            response = llamaApp.completeConversation(conversation)
-                    .mergeWith(pingStream())
-                    .map(data -> formatEvent("data", data));
+            return llamaApp.completeConversation(conversation)
+                    .map(data -> "data: " + data + "\n\n");
         } else {
             return Flux.error(new IllegalArgumentException("Invalid type: " + type));
         }
-
-        return Flux.concat(acknowledgment, response);
-    }
-
-    private String formatEvent(String field, String value) {
-        return field + ": " + value + "\n\n"; // Properly formatted SSE message
     }
 
     private Flux<String> pingStream() {
@@ -97,7 +107,11 @@ public class LlmController {
             return Flux.empty();
         }
         return Flux.interval(Duration.ofSeconds(settings.getPingInterval()))
-                .map(i -> formatEvent("event", "ping"));
+                .map(i -> "event: ping\n\n");
+    }
+
+    private DataBuffer toBuffer(String message) {
+        return new DefaultDataBufferFactory().wrap(message.getBytes(StandardCharsets.UTF_8));
     }
 
     private Conversation convertToConversation(Object input) {
