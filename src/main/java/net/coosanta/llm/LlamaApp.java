@@ -217,7 +217,7 @@ public class LlamaApp {
                 .setStopStrings("<|eot_id|>");
     }
 
-    private static String generateContext(Conversation conversation) {
+    static String generateContext(Conversation conversation) {
         StringBuilder generatedContext = new StringBuilder();
 
         // Adds system prompt to context

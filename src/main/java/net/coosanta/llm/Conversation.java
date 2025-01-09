@@ -12,6 +12,11 @@ public class Conversation {
     private List<Message> messages;
     private int totalTokenLength;
 
+    public Conversation() {
+        this.uuid = UUID.randomUUID();
+        this.messages = new ArrayList<>();
+    }
+
     public Conversation(String systemPrompt, LlamaConfig settings) throws IOException {
         this.uuid = UUID.randomUUID();
         this.systemPrompt = systemPrompt;
