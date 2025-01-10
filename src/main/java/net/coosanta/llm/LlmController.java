@@ -173,23 +173,53 @@ public class LlmController {
         return ResponseEntity.ok(title);
     }
 
+    // Bash: curl -X POST -H "Content-Type: application/json" -d '{"systemPrompt":"your-system-prompt","messages":[{"role":"User","content":"your-message"}, {"role":"Assistant","content":"response-message"}]}' "http://localhost:8080/api/v1/completion-title"
     @PostMapping("/completion-title")
-    public ResponseEntity<String> setTitleCompletion(@RequestBody Object conversation) {
+    public SseEmitter setTitleCompletion(@RequestBody Object conversation) {
+        SseEmitter emitter = new SseEmitter(0L);
 
-        Conversation completion = convertToConversation(conversation);
+        // This is unreasonably complex for something this trivial.
+        try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
+            emitter.send(SseEmitter.event().name("generating"));
 
-        assert completion != null;
-        if (completion.getMessages().isEmpty()) {
-            return ResponseEntity.badRequest().body("Cannot generate title, conversation is empty!");
+            CompletableFuture.runAsync(() -> {
+                try {
+                    Conversation completion = convertToConversation(conversation);
+
+                    assert completion != null;
+                    if (completion.getMessages().isEmpty()) {
+                        emitter.send(SseEmitter.event().name("error").data("Cannot generate title, conversation is empty!"));
+                        return;
+                    }
+
+                    CompletableFuture<String> futureTitle = CompletableFuture.supplyAsync(() -> {
+                        String generatedTitle = llamaApp.generateTitle(completion);
+                        completion.setTitle(generatedTitle);
+                        return generatedTitle;
+                    });
+
+                    String title = futureTitle.join();
+                    emitter.send(SseEmitter.event().name("title").data(title));
+                } catch (Exception e) {
+                    emitter.completeWithError(e);
+                }
+            });
+
+            scheduler.scheduleAtFixedRate(() -> {
+                try {
+                    emitter.send(SseEmitter.event().name("ping"));
+                } catch (Exception e) {
+                    emitter.completeWithError(e);
+                }
+            }, llamaConfig.getPingInterval(), llamaConfig.getPingInterval(), TimeUnit.SECONDS);
+
+        } catch (Exception e) {
+            emitter.completeWithError(e);
+        } finally {
+            emitter.complete();
         }
 
-        CompletableFuture<String> futureTitle = CompletableFuture.supplyAsync(() -> {
-            String generatedTitle = llamaApp.generateTitle(completion);
-            completion.setTitle(generatedTitle);
-            return generatedTitle;
-        });
-        String title = futureTitle.join();
-        return ResponseEntity.ok(title);
+        return emitter;
     }
 
     @PutMapping("/ignore/{convId}/{msgIndex}")
