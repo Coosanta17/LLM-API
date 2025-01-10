@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static net.coosanta.llm.utility.ConversationUtils.*;
+import static net.coosanta.llm.utility.ModelUtils.getCompletionTitleGenerated;
 import static net.coosanta.llm.utility.WebUtils.ping;
 
 // Ignore IDE warnings about these classes, they are used and are quite important!
@@ -170,28 +171,7 @@ public class LlmController {
             emitter.send(SseEmitter.event()
                     .name("generating"));
 
-            CompletableFuture.runAsync(() -> {
-                try {
-                    Conversation completion = convertToConversation(conversation);
-
-                    assert completion != null;
-                    if (completion.getMessages().isEmpty()) {
-                        throw new IllegalArgumentException("Cannot generate title, conversation is empty!");
-                    }
-
-                    CompletableFuture<String> futureTitle = CompletableFuture.supplyAsync(() -> {
-                        String generatedTitle = llamaApp.generateTitle(completion);
-                        completion.setTitle(generatedTitle);
-                        emitter.complete();
-                        return generatedTitle;
-                    });
-
-                    String title = futureTitle.join();
-                    emitter.send(SseEmitter.event().name("title").data(title));
-                } catch (Exception e) {
-                    emitter.completeWithError(e);
-                }
-            });
+            CompletableFuture.runAsync(() -> getCompletionTitleGenerated(conversation, emitter, llamaApp));
 
             ping(scheduler, emitter);
 
