@@ -109,14 +109,14 @@ public class LlmController {
                     }
             );
 
-            if (settings.getSsePing()) {
+            if (llamaConfig.getSsePing()) {
                 scheduler.scheduleAtFixedRate(() -> {
                     try {
                         emitter.send(SseEmitter.event().name("ping"));
                     } catch (Exception e) {
                         emitter.completeWithError(e);
                     }
-                }, settings.getPingInterval(), settings.getPingInterval(), TimeUnit.SECONDS);
+                }, llamaConfig.getPingInterval(), llamaConfig.getPingInterval(), TimeUnit.SECONDS);
             }
 
         } catch (Exception e) {
@@ -174,8 +174,11 @@ public class LlmController {
     }
 
     @PostMapping("/completion-title")
-    public ResponseEntity<String> setTitleCompletion(@RequestBody Conversation completion) {
+    public ResponseEntity<String> setTitleCompletion(@RequestBody Object conversation) {
 
+        Conversation completion = convertToConversation(conversation);
+
+        assert completion != null;
         if (completion.getMessages().isEmpty()) {
             return ResponseEntity.badRequest().body("Cannot generate title, conversation is empty!");
         }

@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 public class ConversationUtils {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    static LlamaConfig settings = LlmController.llamaConfig;
+    private static final LlamaConfig settings = LlmController.llamaConfig;
 
     public static String toJson(Conversation conversation) {
         return gson.toJson(conversation);
@@ -38,15 +38,31 @@ public class ConversationUtils {
 
     // Llama wants messages to look like this
     public static String formatMessage(String role, String content) {
-        return "<|start_header_id|>" + role + "<|end_header_id|>\n" + content + "<|eot_id|>\n\n";
+        return "<|start_header_id|>" + role + "<|end_header_id|>\n\n" + content + "<|eot_id|>";
+    }
+
+    public static String generateContext(Conversation conversation) {
+        StringBuilder generatedContext = new StringBuilder();
+
+        // Adds system prompt to context
+        generatedContext.append(formatMessage("System", conversation.getSystemPrompt()));
+
+        for (Message message : conversation.getMessages()) {
+            if (message.isIgnored()) continue;
+            generatedContext.append(formatMessage(message.getRole(), message.getContent()));
+        }
+        // Add Model prompt
+        generatedContext.append("<|start_header_id|>Assistant<|end_header_id|>\n\n");
+
+        return generatedContext.toString();
     }
 
     public static String unformatMessage(String formattedMessage) {
         // Use regex to extract only the content between the role headers and the end token
         // Example formatted message:
-        // "<|start_header_id|>User<|end_header_id|>\nHello, how are you?<|eot_id|>\n\n"
+        // "<|start_header_id|>User<|end_header_id|>\n\nHello, how are you?<|eot_id|>"
         return formattedMessage
-                .replaceAll("<\\|start_header_id\\|>.*?<\\|end_header_id\\|>\n", "") // Remove role header
+                .replaceAll("<\\|start_header_id\\|>.*?<\\|end_header_id\\|>\n\n", "") // Remove role header
                 .replaceAll("<\\|eot_id\\|>", "") // Remove end-of-text token
                 .trim(); // Trim extra whitespace
     }

@@ -147,6 +147,8 @@ public class LlamaApp {
     public String generateTitle(Conversation conversation) {
         Conversation titleConversation = new Conversation(conversation);
 
+        titleConversation.setSystemPrompt("");
+
         titleConversation.addMessage("User", "make a title for this conversation. Respond only with the title. Try to keep it short.", null);
 
         InferenceParameters inferenceParameters = generateInferenceParameters(titleConversation);
@@ -215,19 +217,6 @@ public class LlamaApp {
                 .setPenalizeNl(true)
                 .setMiroStat(MiroStat.V2)
                 .setStopStrings("<|eot_id|>");
-    }
-
-    static String generateContext(Conversation conversation) {
-        StringBuilder generatedContext = new StringBuilder();
-
-        // Adds system prompt to context
-        generatedContext.append(formatMessage("System", conversation.getSystemPrompt()));
-
-        for (Message message : conversation.getMessages()) {
-            if (message.isIgnored()) continue;
-            generatedContext.append(formatMessage(message.getRole(), message.getContent()));
-        }
-        return generatedContext.toString();
     }
 
     public void setIgnoreMessage(Conversation conversation, int messageIndex, boolean ignored) throws IOException {
