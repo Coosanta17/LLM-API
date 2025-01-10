@@ -5,6 +5,7 @@ import de.kherud.llama.LlamaModel;
 import de.kherud.llama.LlamaOutput;
 import de.kherud.llama.ModelParameters;
 import de.kherud.llama.args.MiroStat;
+import net.coosanta.llm.utility.ConversationUtils;
 import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
@@ -20,7 +21,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static net.coosanta.llm.ConversationUtils.*;
+import static net.coosanta.llm.utility.ConversationUtils.*;
 
 public class LlamaApp {
     private LlamaModel model;
@@ -156,11 +157,23 @@ public class LlamaApp {
         String rawTitle = getModelResponse(inferenceParameters)
                 .collectList()
                 .map(list -> String.join("", list))
-                .block(); // Block to get the result synchronously
+                .block(); // Block to get the result synchronously, this is because it will return nothing otherwise.
+
+        System.out.println(rawTitle);
 
         assert rawTitle != null; // ask ide why this is here.
+
+        String cookedTitle;
+
         // Removes quotation marks from the title if they exist (as the model can sometimes generate them)
-        return (rawTitle.startsWith("\"") && rawTitle.endsWith("\"")) ? rawTitle.substring(1, rawTitle.length() - 1) : rawTitle;
+        if (rawTitle.startsWith("\"") && rawTitle.endsWith("\"")) {
+            // Fry lightly on both sides
+            cookedTitle = rawTitle.substring(1, rawTitle.length() - 1);
+        } else {
+            // Serve it raw
+            cookedTitle = rawTitle;
+        }
+        return cookedTitle;
     }
 
     // How to make this not bound to LlamaApp class??
@@ -252,7 +265,7 @@ public class LlamaApp {
     private void scheduleModelDeinitialization() {
         int inactivityTimeout = settings.getModelSettings().getInactivityTimeout();
 
-        if (inactivityTimeout == -1) {
+        if (inactivityTimeout <= -1) {
             return; // Never unload the model
         }
 

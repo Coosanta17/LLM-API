@@ -1,5 +1,7 @@
 package net.coosanta.llm;
 
+import net.coosanta.llm.utility.ConversationUtils;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;

@@ -12,9 +12,9 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import static net.coosanta.llm.ConversationUtils.*;
+import static net.coosanta.llm.utility.ConversationUtils.*;
+import static net.coosanta.llm.utility.WebUtils.ping;
 
 // Ignore IDE warnings about these classes, they are used and are quite important!
 @CrossOrigin(origins = "*", allowedHeaders = "*") // Other methods to allow Cors didn't work so I am covering eveything for now.
@@ -109,15 +109,7 @@ public class LlmController {
                     }
             );
 
-            if (llamaConfig.getSsePing()) {
-                scheduler.scheduleAtFixedRate(() -> {
-                    try {
-                        emitter.send(SseEmitter.event().name("ping"));
-                    } catch (Exception e) {
-                        emitter.completeWithError(e);
-                    }
-                }, llamaConfig.getPingInterval(), llamaConfig.getPingInterval(), TimeUnit.SECONDS);
-            }
+            ping(scheduler, emitter);
 
         } catch (Exception e) {
             emitter.completeWithError(e);
@@ -138,11 +130,6 @@ public class LlmController {
             return ResponseEntity.badRequest().body(e);
         }
         return ResponseEntity.ok(editedMessage);
-    }
-
-    private static Conversation getConversation(String uuid) throws IOException {
-        Path conversationPath = getConversationSavePathFromUuid(UUID.fromString(uuid));
-        return loadFromFile(conversationPath);
     }
 
     // Bash (set title): curl -X PUT "http://localhost:8080/api/v1/title?uuid=your-uuid-here&title=your-title-here"
@@ -180,7 +167,8 @@ public class LlmController {
 
         // This is unreasonably complex for something this trivial.
         try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
-            emitter.send(SseEmitter.event().name("generating"));
+            emitter.send(SseEmitter.event()
+                    .name("generating"));
 
             CompletableFuture.runAsync(() -> {
                 try {
@@ -188,13 +176,13 @@ public class LlmController {
 
                     assert completion != null;
                     if (completion.getMessages().isEmpty()) {
-                        emitter.send(SseEmitter.event().name("error").data("Cannot generate title, conversation is empty!"));
-                        return;
+                        throw new IllegalArgumentException("Cannot generate title, conversation is empty!");
                     }
 
                     CompletableFuture<String> futureTitle = CompletableFuture.supplyAsync(() -> {
                         String generatedTitle = llamaApp.generateTitle(completion);
                         completion.setTitle(generatedTitle);
+                        emitter.complete();
                         return generatedTitle;
                     });
 
@@ -205,18 +193,10 @@ public class LlmController {
                 }
             });
 
-            scheduler.scheduleAtFixedRate(() -> {
-                try {
-                    emitter.send(SseEmitter.event().name("ping"));
-                } catch (Exception e) {
-                    emitter.completeWithError(e);
-                }
-            }, llamaConfig.getPingInterval(), llamaConfig.getPingInterval(), TimeUnit.SECONDS);
+            ping(scheduler, emitter);
 
         } catch (Exception e) {
             emitter.completeWithError(e);
-        } finally {
-            emitter.complete();
         }
 
         return emitter;

@@ -2,7 +2,7 @@ package net.coosanta.llm;
 
 import org.junit.jupiter.api.Test;
 
-import static net.coosanta.llm.ConversationUtils.*;
+import static net.coosanta.llm.utility.ConversationUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ConversationUtilsTests {

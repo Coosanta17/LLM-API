@@ -1,7 +1,11 @@
-package net.coosanta.llm;
+package net.coosanta.llm.utility;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import net.coosanta.llm.Conversation;
+import net.coosanta.llm.LlamaConfig;
+import net.coosanta.llm.LlmController;
+import net.coosanta.llm.Message;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -104,6 +108,11 @@ public class ConversationUtils {
             throw new IllegalArgumentException("Invalid input type for conversation");
         }
         return null;
+    }
+
+    public static Conversation getConversation(String uuid) throws IOException {
+        Path conversationPath = getConversationSavePathFromUuid(UUID.fromString(uuid));
+        return loadFromFile(conversationPath);
     }
 
 }
