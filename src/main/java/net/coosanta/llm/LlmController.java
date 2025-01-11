@@ -166,17 +166,18 @@ public class LlmController {
     public SseEmitter setTitleCompletion(@RequestBody Object conversation) {
         SseEmitter emitter = new SseEmitter(0L);
 
-        // This is unreasonably complex for something this trivial.
-        try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
-            emitter.send(SseEmitter.event()
-                    .name("generating"));
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-            CompletableFuture.runAsync(() -> getCompletionTitleGenerated(conversation, emitter, llamaApp));
+        try {
+            emitter.send(SseEmitter.event().name("generating"));
+
+            CompletableFuture.runAsync(() -> getCompletionTitleGenerated(conversation, emitter, llamaApp, scheduler));
 
             ping(scheduler, emitter);
 
         } catch (Exception e) {
             emitter.completeWithError(e);
+            scheduler.close();
         }
 
         return emitter;
