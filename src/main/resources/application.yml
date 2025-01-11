@@ -58,6 +58,12 @@ app:
   # File path where conversations are stored relative to project root.
   conversation-path: ./conversations/
 
+  # Whether to save completion conversations
+  # this is so you can access conversations sent in by completions in the conversation interface as well
+  # Confused? So am I.
+  # Potentially large and excess conversations in conversations so only use if necessary.
+  save-completion-conversations: true
+
   # Maximum amount of conversations to store in memory.
   # Lower values may increase disk activity but reduce memory usage (small impact)
   loaded-conversations-limit: 100 # TODO: FIX!

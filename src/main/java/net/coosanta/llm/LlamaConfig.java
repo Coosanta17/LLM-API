@@ -11,6 +11,7 @@ public class LlamaConfig {
     private int loadedConversationsLimit;
     private boolean ssePing;
     private int pingInterval;
+    private boolean saveCompletionConversations;
 
     private ModelConfig model = new ModelConfig();
 
@@ -39,7 +40,7 @@ public class LlamaConfig {
         this.loadedConversationsLimit = loadedConversationsLimit;
     }
 
-    public boolean getSsePing() {
+    public boolean isSsePing() {
         return this.ssePing;
     }
 
@@ -53,6 +54,14 @@ public class LlamaConfig {
 
     public void setPingInterval(int pingInterval) {
         this.pingInterval = pingInterval;
+    }
+
+    public boolean isSaveCompletionConversations() {
+        return this.saveCompletionConversations;
+    }
+
+    public void setSaveCompletionConversations(boolean saveCompletionConversations) {
+        this.saveCompletionConversations = saveCompletionConversations;
     }
 
 
