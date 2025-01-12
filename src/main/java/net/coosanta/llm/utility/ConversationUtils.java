@@ -101,13 +101,14 @@ public class ConversationUtils {
                 @SuppressWarnings("unchecked")
                 LinkedHashMap<String, Object> castedMap = (LinkedHashMap<String, Object>) map;
                 return new Conversation(castedMap);
+            } else {
+                throw new IllegalArgumentException("Map keys must be of type String");
             }
         } else if (input instanceof Conversation) {
             return (Conversation) input;
         } else {
             throw new IllegalArgumentException("Invalid input type for conversation");
         }
-        return null;
     }
 
     public static Conversation getConversation(String uuid) throws IOException {
