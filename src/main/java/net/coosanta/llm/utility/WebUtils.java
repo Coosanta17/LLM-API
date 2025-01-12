@@ -50,12 +50,11 @@ public class WebUtils {
 
     public static void streamResponse(String data, SseEmitter emitter, StringBuilder modelResponseString) {
         try {
-            emitter.send(SseEmitter.event()
-                    .data(data));
+            emitter.send(SseEmitter.event().data(data));
+            modelResponseString.append(data);
         } catch (Exception e) {
             emitter.completeWithError(e);
         }
-        modelResponseString.append(data);
     }
 
     public static void getCompletionTitleGenerated(

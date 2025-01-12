@@ -88,22 +88,25 @@ public class LlmController {
                 response = llamaApp.completeConversation(conversation);
             } else {
                 emitter.completeWithError(new IllegalArgumentException("Invalid type: " + type));
+                scheduler.close();
                 return emitter;
             }
 
+            ping(scheduler, emitter);
+
             // Send response stream
-            Conversation finalConversation = conversation;
+            Conversation finalConversation = new Conversation(conversation);
             response.subscribe(
                     data -> streamResponse(data, emitter, modelResponseString),
-                    emitter::completeWithError,
+                    e -> {
+                        emitter.completeWithError(e);
+                        scheduler.close();
+                    },
                     closeChatStream(scheduler, emitter, finalConversation, modelResponseString.toString())
             );
 
-            ping(scheduler, emitter);
-
         } catch (Exception e) {
             emitter.completeWithError(e);
-        } finally {
             scheduler.close();
         }
 

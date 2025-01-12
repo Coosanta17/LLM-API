@@ -1,9 +1,6 @@
 package net.coosanta.llm;
 
-import de.kherud.llama.InferenceParameters;
-import de.kherud.llama.LlamaModel;
-import de.kherud.llama.LlamaOutput;
-import de.kherud.llama.ModelParameters;
+import de.kherud.llama.*;
 import de.kherud.llama.args.MiroStat;
 import net.coosanta.llm.utility.ConversationUtils;
 import org.jetbrains.annotations.NotNull;
@@ -240,7 +237,7 @@ public class LlamaApp {
     private Flux<String> getModelResponse(InferenceParameters inferenceParams) {
         loadModel();
 
-        Iterator<LlamaOutput> iterator = model.generate(inferenceParams).iterator();
+        LlamaIterator iterator = model.generate(inferenceParams).iterator();
 
         Iterable<String> iterable = () -> new Iterator<>() {
             @Override
@@ -259,7 +256,8 @@ public class LlamaApp {
                         Flux::fromStream,
                         Stream::close
                 )
-                .doOnComplete(this::scheduleModelDeinitialization);
+                .doOnComplete(this::scheduleModelDeinitialization)
+                .doOnCancel(iterator::cancel);
     }
 
     private void scheduleModelDeinitialization() {
