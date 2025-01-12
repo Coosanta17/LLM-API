@@ -4,6 +4,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 import java.util.*;
@@ -96,7 +97,7 @@ public class LlmController {
 
             // Send response stream
             Conversation finalConversation = new Conversation(conversation);
-            response.subscribe(
+            Disposable subscription = response.subscribe(
                     data -> streamResponse(data, emitter, modelResponseString),
                     e -> {
                         emitter.completeWithError(e);
@@ -104,6 +105,18 @@ public class LlmController {
                     },
                     closeChatStream(scheduler, emitter, finalConversation, modelResponseString.toString())
             );
+
+            // Handle client-side disconnects
+            emitter.onCompletion(() -> {
+                subscription.dispose();
+                scheduler.shutdown();
+            });
+
+            emitter.onTimeout(() -> {
+                subscription.dispose();
+                scheduler.shutdown();
+                emitter.complete();
+            });
 
         } catch (Exception e) {
             emitter.completeWithError(e);
