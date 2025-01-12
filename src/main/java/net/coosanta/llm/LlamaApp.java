@@ -260,7 +260,10 @@ public class LlamaApp {
                         Stream::close
                 )
                 .doOnComplete(this::scheduleModelDeinitialization)
-                .doOnCancel(iterator::cancel);
+                .doOnCancel(() -> {
+                    iterator.cancel();
+                    this.scheduleModelDeinitialization();
+                });
     }
 
     private void scheduleModelDeinitialization() {

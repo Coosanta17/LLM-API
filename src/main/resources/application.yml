@@ -108,7 +108,7 @@ app:
     # the prompt to be responded to once a spot frees up.
     # The more parallel sequences the model can do the slower it may become on each response
     # If there are multiple responses being generated at once.
-    parallel-sequences: 3
+    parallel-sequences: 2
 
     # Set the number of layers to store in VRAM (use default: -1)
     gpu-layers: -1
@@ -132,4 +132,4 @@ app:
     # At what level of fragmentation of KV cache does the model defragment it.
     # Especially useful with many parallel sequences as the context KV cache can get fragmented.
     # (KV cache is the cache of what the model has generated to make a completion properly and with context).
-    defragmentation-threshold: 0.5
+    defragmentation-threshold: 5
