@@ -67,7 +67,6 @@ public class WebUtils {
         try {
             Conversation completion = convertToConversation(conversation);
 
-            assert completion != null;
             if (completion.getMessages().isEmpty()) {
                 throw new IllegalArgumentException("Cannot generate title, conversation is empty!");
             }
@@ -77,7 +76,7 @@ public class WebUtils {
             futureTitle.thenAccept(generatedTitle -> {
                 try {
                     emitter.send(SseEmitter.event()
-                            .name("title").data(generatedTitle));
+                            .name("title").data(generatedTitle.trim()));
                     emitter.complete();
                 } catch (IOException e) {
                     emitter.completeWithError(e);
