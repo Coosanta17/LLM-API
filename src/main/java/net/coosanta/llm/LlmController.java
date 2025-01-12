@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeoutException;
 
 import static net.coosanta.llm.utility.ConversationUtils.*;
 import static net.coosanta.llm.utility.WebUtils.*;
@@ -66,12 +67,10 @@ public class LlmController {
     // Bash (Also string): curl -X POST -H "Content-Type: application/json" -d '"your-string-input-here"' "http://localhost:8080/api/v1/complete"
     @PostMapping(value = "/complete", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter completeChat(@RequestParam(required = false) String type, @RequestBody Object input) {
-        SseEmitter emitter = new SseEmitter(0L);
+        SseEmitter emitter = new SseEmitter(0L); // No timeout
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
         StringBuilder modelResponseString = new StringBuilder();
-
-        Conversation conversation = new Conversation();
 
         try {
             emitter.send(SseEmitter.event()
@@ -79,48 +78,42 @@ public class LlmController {
 
             Flux<String> response;
 
+            Conversation conversation = null;
             if (type == null || Objects.equals(type.toLowerCase(), "string")) {
                 response = llamaApp.completeString((String) input);
             } else if (Objects.equals(type.toLowerCase(), "conversation")) {
-                conversation = convertToConversation(input);
-
-                assert conversation != null;
+                conversation = new Conversation(convertToConversation(input));
 
                 response = llamaApp.completeConversation(conversation);
             } else {
                 emitter.completeWithError(new IllegalArgumentException("Invalid type: " + type));
-                scheduler.close();
                 return emitter;
             }
 
             ping(scheduler, emitter);
 
             // Send response stream
-            Conversation finalConversation = new Conversation(conversation);
+            Conversation finalConversation = conversation;
             Disposable subscription = response.subscribe(
                     data -> streamResponse(data, emitter, modelResponseString),
-                    e -> {
-                        emitter.completeWithError(e);
-                        scheduler.close();
-                    },
-                    closeChatStream(scheduler, emitter, finalConversation, modelResponseString.toString())
+                    emitter::completeWithError,
+                    emitter::complete
             );
 
-            // Handle client-side disconnects
-            emitter.onCompletion(() -> {
-                subscription.dispose();
-                scheduler.shutdown();
-            });
+            emitter.onCompletion(closeChatStream(scheduler, finalConversation, subscription, String.valueOf(modelResponseString)));
 
             emitter.onTimeout(() -> {
-                subscription.dispose();
-                scheduler.shutdown();
-                emitter.complete();
+                if (!subscription.isDisposed()) {
+                    emitter.completeWithError(new TimeoutException("Request timed out"));
+                } else {
+                    System.out.println("Emitter failed to close after subscription was disposed");
+                    emitter.complete();
+                }
             });
 
         } catch (Exception e) {
             emitter.completeWithError(e);
-            scheduler.close();
+            scheduler.shutdown();
         }
 
         return emitter;

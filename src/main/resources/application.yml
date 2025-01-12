@@ -97,7 +97,14 @@ app:
     # How many threads the model uses. The more threads the faster
     # the model responds. However, this can result in other
     # applications being impacted due to less resources.
-    threads: 3
+    threads: 4
+
+    # How many concurrent completions the model can do.
+    # If there are more than the configured number of parallel sequences it will queue
+    # the prompt to be responded to once a spot frees up.
+    # The more parallel sequences the model can do the slower it may become on each response
+    # If there are multiple responses being generated at once.
+    parallel-sequences: 3
 
     # Set the number of layers to store in VRAM (use default: -1)
     gpu-layers: -1

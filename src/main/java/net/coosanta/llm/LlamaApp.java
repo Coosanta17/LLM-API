@@ -208,7 +208,8 @@ public class LlamaApp {
                 .setNGpuLayers(modelSettings.getGpuLayers())
                 .setNCtx(modelSettings.getContext())
                 .setNThreads(modelSettings.getThreads())
-                .setNPredict(modelSettings.getResponseLimit());
+                .setNPredict(modelSettings.getResponseLimit())
+                .setNParallel(modelSettings.getParallelSequences());
 
         return new LlamaModel(modelParams);
     }

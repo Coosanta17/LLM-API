@@ -4,6 +4,7 @@ import net.coosanta.llm.Conversation;
 import net.coosanta.llm.LlamaApp;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.Disposable;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -29,14 +30,14 @@ public class WebUtils {
 
     public static @NotNull Runnable closeChatStream(
             ScheduledExecutorService scheduler,
-            SseEmitter emitter,
             Conversation finalConversation,
+            Disposable disposable,
             String modelResponseString) {
 
         return () -> {
             scheduler.close();
-            emitter.complete();
-            if (llamaConfig.isSaveCompletionConversations()) {
+            disposable.dispose();
+            if (llamaConfig.isSaveCompletionConversations() && finalConversation != null) {
                 finalConversation.addMessage("Assistant", modelResponseString, null);
                 try {
                     saveToFile(finalConversation, getConversationSavePathFromUuid(finalConversation.getUuid()));

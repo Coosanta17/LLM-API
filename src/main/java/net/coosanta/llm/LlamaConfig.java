@@ -70,6 +70,7 @@ public class LlamaConfig {
         private int context;
         private int responseLimit;
         private int threads;
+        private int parallelSequences;
         private int gpuLayers;
         private int inactivityTimeout;
         private boolean loadOnStart;
@@ -104,6 +105,14 @@ public class LlamaConfig {
 
         public void setThreads(int threads) {
             this.threads = threads;
+        }
+
+        public int getParallelSequences() {
+            return this.parallelSequences;
+        }
+
+        public void setParallelSequences(int parallelSequences) {
+            this.parallelSequences = parallelSequences;
         }
 
         public int getGpuLayers() {
