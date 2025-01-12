@@ -68,12 +68,14 @@ public class LlamaConfig {
     public static class ModelConfig {
         private String path;
         private int context;
+        private int keepInitialPrompt;
         private int responseLimit;
         private int threads;
         private int parallelSequences;
         private int gpuLayers;
         private int inactivityTimeout;
         private boolean loadOnStart;
+        private float defragmentationThreshold;
 
         public String getPath() {
             return this.path;
@@ -89,6 +91,18 @@ public class LlamaConfig {
 
         public void setContext(int context) {
             this.context = context;
+        }
+
+        public int getKeepInitialPrompt() {
+            return this.keepInitialPrompt;
+        }
+
+        public void setKeepInitialPrompt(boolean keepInitialPromptBool) {
+            if (keepInitialPromptBool) {
+                this.keepInitialPrompt = -1;
+            } else {
+                this.keepInitialPrompt = 0;
+            }
         }
 
         public int getResponseLimit() {
@@ -137,6 +151,14 @@ public class LlamaConfig {
 
         public void setLoadOnStart(boolean loadOnStart) {
             this.loadOnStart = loadOnStart;
+        }
+
+        public float getDefragmentationThreshold() {
+            return this.defragmentationThreshold;
+        }
+
+        public void setDefragmentationThreshold(float defragmentationThreshold) {
+            this.defragmentationThreshold = defragmentationThreshold;
         }
     }
 

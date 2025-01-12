@@ -4,7 +4,7 @@ server:
 
   forward-headers-strategy: native
 
-  # HTTP redirect. Not necessary but I include it here (commented out) anyway.
+  # HTTP redirect. Not necessary but I include it here anyway. Uncomment to use of course.
 #  tomcat:
 #    additional-connectors:
 #      port: 8080
@@ -87,6 +87,10 @@ app:
     # Set to 0 to load model default (might use too much ram)
     context: 700
 
+    # Whether to keep the first message in the conversation.
+    # Useful if the first message is a system prompt.
+    keep-initial-prompt: true
+
     # How many token the model generates each response.
     # It is not recommended to have the number higher than context as this can result
     # in weird responses (endless repetition of the same token)
@@ -125,6 +129,7 @@ app:
     # lifecycle, set this to true and `inactivity-timeout` to -1.
     load-on-start: false
 
-    # TODO: Scrolling window thing
-
-    # more setting to come!
+    # At what level of fragmentation of KV cache does the model defragment it.
+    # Especially useful with many parallel sequences as the context KV cache can get fragmented.
+    # (KV cache is the cache of what the model has generated to make a completion properly and with context).
+    defragmentation-threshold: 0.5

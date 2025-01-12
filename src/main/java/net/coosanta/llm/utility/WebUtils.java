@@ -49,7 +49,7 @@ public class WebUtils {
         };
     }
 
-    public static void streamResponse(String data, SseEmitter emitter, StringBuilder modelResponseString) {
+    public static void streamResponse(String data, SseEmitter emitter, StringBuffer modelResponseString) {
         try {
             emitter.send(SseEmitter.event().data(data));
             modelResponseString.append(data);

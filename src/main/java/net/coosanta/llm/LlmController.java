@@ -70,7 +70,7 @@ public class LlmController {
         SseEmitter emitter = new SseEmitter(0L); // No timeout
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-        StringBuilder modelResponseString = new StringBuilder();
+        StringBuffer modelResponse = new StringBuffer();
 
         try {
             emitter.send(SseEmitter.event()
@@ -95,12 +95,14 @@ public class LlmController {
             // Send response stream
             Conversation finalConversation = conversation;
             Disposable subscription = response.subscribe(
-                    data -> streamResponse(data, emitter, modelResponseString),
+                    data -> streamResponse(data, emitter, modelResponse),
                     emitter::completeWithError,
                     emitter::complete
             );
 
-            emitter.onCompletion(closeChatStream(scheduler, finalConversation, subscription, String.valueOf(modelResponseString)));
+            String modelResponseString = modelResponse.toString();
+            System.out.println("Model response: " + modelResponseString); // debug
+            emitter.onCompletion(closeChatStream(scheduler, finalConversation, subscription, modelResponseString));
 
             emitter.onTimeout(() -> {
                 if (!subscription.isDisposed()) {
