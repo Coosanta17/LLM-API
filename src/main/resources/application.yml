@@ -89,10 +89,6 @@ app:
     # For example, 1000 context shared among 4 parallel sequences will be 250 context per slot.
     context: 1024
 
-    # Whether to keep the first message in the conversation always loaded in context.
-    # Useful if the first message is a system prompt.
-    keep-initial-prompt: true
-
     # How many token the model generates each response.
     # It is not recommended to have the number higher than context as this can result
     # in weird responses (endless repetition of the same token)

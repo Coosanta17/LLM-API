@@ -68,7 +68,6 @@ public class LlamaConfig {
     public static class ModelConfig {
         private String path;
         private int context;
-        private int keepInitialPrompt;
         private int responseLimit;
         private int threads;
         private int parallelSequences;
@@ -91,18 +90,6 @@ public class LlamaConfig {
 
         public void setContext(int context) {
             this.context = context;
-        }
-
-        public int getKeepInitialPrompt() {
-            return this.keepInitialPrompt;
-        }
-
-        public void setKeepInitialPrompt(boolean keepInitialPromptBool) {
-            if (keepInitialPromptBool) {
-                this.keepInitialPrompt = -1;
-            } else {
-                this.keepInitialPrompt = 0;
-            }
         }
 
         public int getResponseLimit() {
