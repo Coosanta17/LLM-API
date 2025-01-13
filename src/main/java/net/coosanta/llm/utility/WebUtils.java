@@ -54,13 +54,16 @@ public class WebUtils {
             } else {
                 int totalTokenLength = llamaApp.calculateTokenLength(generateContext(conversation));
                 System.out.println("Total toke length: "+totalTokenLength); //debug
-                // nothing goes past here?
+
                 conversation.setTotalTokenLength(totalTokenLength);
                 System.out.println("Set totalTokenLength variable in conversation");
 
                 int contextPerSlot = modelConfig.getContext() / modelConfig.getParallelSequences();
                 System.out.println("Calculated context per slot");
-                int tokenLengthSinceLastSystemPrompt = totalTokenLength - conversation.getTokenLengthAtLastSystemPrompt();
+
+                int tokenLengthAtLastSystemPrompt = conversation.getTokenLengthAtLastSystemPrompt() == null ? 0 : conversation.getTokenLengthAtLastSystemPrompt();
+
+                int tokenLengthSinceLastSystemPrompt = totalTokenLength - tokenLengthAtLastSystemPrompt;
                 System.out.println("Calculated the token system prompt thing");
 
                 //debug
