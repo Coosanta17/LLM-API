@@ -53,14 +53,17 @@ public class WebUtils {
                 System.err.println("Cannot calculate token length - model is unloaded.");
             } else {
                 int totalTokenLength = llamaApp.calculateTokenLength(generateContext(conversation));
+                System.out.println("Total toke length: "+totalTokenLength); //debug
+
                 conversation.setTotalTokenLength(totalTokenLength);
 
                 int contextPerSlot = modelConfig.getContext() / modelConfig.getParallelSequences();
                 int tokenLengthSinceLastSystemPrompt = totalTokenLength - conversation.getTokenLengthAtLastSystemPrompt();
-                if (tokenLengthSinceLastSystemPrompt >= contextPerSlot - contextPerSlot * 0.1)
-                {
+
+                if (tokenLengthSinceLastSystemPrompt >= contextPerSlot - contextPerSlot * 0.1) {
                     conversation.addMessage("System", conversation.getSystemPrompt(), null);
                     conversation.setTokenLengthAtLastSystemPrompt(totalTokenLength);
+                    System.out.println("Injected System prompt to keep model on track");//debug
                 }
             }
             saveToFile(conversation, getConversationSavePathFromUuid(conversation.getUuid()));

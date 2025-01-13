@@ -30,9 +30,11 @@ public class ConversationUtils {
     }
 
     public static void saveToFile(Conversation conversation, Path filePath) throws IOException {
+        System.out.println("Saving conversation to file...");//debug
         Files.createDirectories(filePath.getParent());
         String json = toJson(conversation);
         Files.writeString(filePath, json);
+        System.out.println("Saved conversation to file!");//debug
     }
 
     public static Conversation loadFromFile(Path filePath) throws IOException {
