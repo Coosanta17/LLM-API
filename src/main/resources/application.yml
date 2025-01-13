@@ -87,9 +87,9 @@ app:
     # Set to 0 to load model default (might use too much ram)
     # Parallel sequences will equally divide context between each other.
     # For example, 1000 context shared among 4 parallel sequences will be 250 context per slot.
-    context: 1400
+    context: 1024
 
-    # Whether to keep the first message in the conversation.
+    # Whether to keep the first message in the conversation always loaded in context.
     # Useful if the first message is a system prompt.
     keep-initial-prompt: true
 
@@ -98,7 +98,7 @@ app:
     # in weird responses (endless repetition of the same token)
     # Set to -1 for infinity
     # Set to -2 for until context filled (for some reason this doesn't work for me)
-    response-limit: 600
+    response-limit: 400
 
     # How many threads the model uses. The more threads the faster
     # the model responds. However, this can result in other
