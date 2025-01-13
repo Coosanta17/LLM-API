@@ -100,7 +100,7 @@ public class LlmController {
                     emitter::complete
             );
 
-            emitter.onCompletion(closeChatStream(scheduler, conversation, subscription, modelResponse, llamaApp));
+            emitter.onCompletion(closeChatStream(scheduler, conversation, subscription, modelResponse));
 
             emitter.onTimeout(() -> {
                 if (!subscription.isDisposed()) {

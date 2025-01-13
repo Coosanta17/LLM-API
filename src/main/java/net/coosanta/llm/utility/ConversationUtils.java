@@ -50,13 +50,14 @@ public class ConversationUtils {
     public static String generateContext(Conversation conversation) {
         StringBuilder generatedContext = new StringBuilder();
 
-        // Adds system prompt to context
-        generatedContext.append(formatMessage("System", conversation.getSystemPrompt()));
-
         for (Message message : conversation.getMessages()) {
             if (message.isIgnored()) continue;
             generatedContext.append(formatMessage(message.getRole(), message.getContent()));
         }
+
+        // Adds system prompt to context
+        generatedContext.append(formatMessage("System", conversation.getSystemPrompt()));
+
         // Add Model prompt
         generatedContext.append("<|start_header_id|>Assistant<|end_header_id|>\n\n");
 
