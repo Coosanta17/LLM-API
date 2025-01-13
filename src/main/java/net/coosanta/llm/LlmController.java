@@ -100,7 +100,7 @@ public class LlmController {
                     emitter::complete
             );
 
-            emitter.onCompletion(closeChatStream(scheduler, conversation, subscription, modelResponse));
+            emitter.onCompletion(closeChatStream(scheduler, conversation, subscription, modelResponse, llamaApp));
 
             emitter.onTimeout(() -> {
                 if (!subscription.isDisposed()) {
@@ -151,12 +151,12 @@ public class LlmController {
 //
 //            CompletableFuture<String> futureTitle = CompletableFuture.supplyAsync(() -> {
 //                String generatedTitle = llamaApp.generateTitle(conversation);
-//                conversation.setTitle(generatedTitle);
+//                conversation.setName(generatedTitle);
 //                return generatedTitle;
 //            });
 //            title = futureTitle.join();
 //        } else {
-//            conversation.setTitle(title);
+//            conversation.setName(title);
 //        }
 //        saveToFile(conversation, conversationPath);
 //        return ResponseEntity.ok(title);

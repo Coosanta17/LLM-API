@@ -50,6 +50,10 @@ public class LlamaApp {
         }
     }
 
+    public LlamaModel getModel() {
+        return this.model;
+    }
+
     public Flux<String> runConversation(UUID conversationUuid, String prompt) throws IOException {
         Path savePath = getConversationSavePathFromUuid(conversationUuid);
 

@@ -2,6 +2,7 @@ package net.coosanta.llm.utility;
 
 import net.coosanta.llm.Conversation;
 import net.coosanta.llm.LlamaApp;
+import net.coosanta.llm.LlamaConfig;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.Disposable;
@@ -32,20 +33,36 @@ public class WebUtils {
             ScheduledExecutorService scheduler,
             Conversation conversation,
             Disposable disposable,
-            StringBuffer modelResponse) {
+            StringBuffer modelResponse,
+            LlamaApp llamaApp) {
 
         return () -> {
             scheduler.close();
             disposable.dispose();
             if (llamaConfig.isSaveCompletionConversations() && conversation != null) {
-                saveCompletionConversation(conversation, modelResponse);
+                saveCompletionConversation(conversation, modelResponse, llamaApp);
             }
         };
     }
 
-    private static void saveCompletionConversation(Conversation conversation, StringBuffer modelResponse) {
+    private static void saveCompletionConversation(Conversation conversation, StringBuffer modelResponse, LlamaApp llamaApp) {
         conversation.addMessage("Assistant", modelResponse.toString(), null);
+        LlamaConfig.ModelConfig modelConfig = llamaConfig.getModelSettings();
         try {
+            if (llamaApp.getModel() == null) {
+                System.err.println("Cannot calculate token length - model is unloaded.");
+            } else {
+                int totalTokenLength = llamaApp.calculateTokenLength(generateContext(conversation));
+                conversation.setTotalTokenLength(totalTokenLength);
+
+                int contextPerSlot = modelConfig.getContext() / modelConfig.getParallelSequences();
+                int tokenLengthSinceLastSystemPrompt = totalTokenLength - conversation.getTokenLengthAtLastSystemPrompt();
+                if (tokenLengthSinceLastSystemPrompt >= contextPerSlot - contextPerSlot * 0.1)
+                {
+                    conversation.addMessage("System", conversation.getSystemPrompt(), null);
+                    conversation.setTokenLengthAtLastSystemPrompt(totalTokenLength);
+                }
+            }
             saveToFile(conversation, getConversationSavePathFromUuid(conversation.getUuid()));
         } catch (IOException e) {
             System.err.println("Failed to save conversation");

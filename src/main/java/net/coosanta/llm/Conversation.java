@@ -9,9 +9,10 @@ import java.util.*;
 public class Conversation {
     private final UUID uuid;
     private String systemPrompt;
-    private String title;
+    private String name;
     private List<Message> messages;
     private int totalTokenLength;
+    private Integer tokenLengthAtLastSystemPrompt;
 
     public Conversation() {
         this.uuid = UUID.randomUUID();
@@ -29,15 +30,16 @@ public class Conversation {
     public Conversation(Conversation conversation) {
         this.uuid = conversation.getUuid() != null ? conversation.getUuid() : UUID.randomUUID();
         this.systemPrompt = conversation.getSystemPrompt();
-        this.title = conversation.getTitle();
+        this.name = conversation.getName();
         this.messages = conversation.getMessages();
         this.totalTokenLength = conversation.getTotalTokenLength();
+        this.tokenLengthAtLastSystemPrompt = conversation.getTokenLengthAtLastSystemPrompt();
     }
 
     public Conversation(LinkedHashMap<String, Object> map) {
         this.uuid = map.get("uuid") != null ? UUID.fromString((String) map.get("uuid")) : UUID.randomUUID();
         this.systemPrompt = Objects.requireNonNull((String) map.get("systemPrompt"), "systemPrompt cannot be null");
-        this.title = (String) map.get("title");
+        this.name = (String) map.get("name");
         this.messages = new ArrayList<>();
 
         @SuppressWarnings("unchecked")
@@ -89,12 +91,12 @@ public class Conversation {
         return uuid;
     }
 
-    public String getTitle() {
-        return title;
+    public String getName() {
+        return name;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public int getTotalTokenLength() {
@@ -103,6 +105,14 @@ public class Conversation {
 
     public void setTotalTokenLength(int totalTokenLength) {
         this.totalTokenLength = totalTokenLength;
+    }
+
+    public Integer getTokenLengthAtLastSystemPrompt() {
+        return tokenLengthAtLastSystemPrompt;
+    }
+
+    public void setTokenLengthAtLastSystemPrompt(Integer tokenLengthAtLastSystemPrompt) {
+        this.tokenLengthAtLastSystemPrompt = tokenLengthAtLastSystemPrompt;
     }
 }
 
