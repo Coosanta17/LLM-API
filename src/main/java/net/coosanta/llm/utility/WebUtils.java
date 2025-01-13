@@ -60,10 +60,16 @@ public class WebUtils {
                 int contextPerSlot = modelConfig.getContext() / modelConfig.getParallelSequences();
                 int tokenLengthSinceLastSystemPrompt = totalTokenLength - conversation.getTokenLengthAtLastSystemPrompt();
 
+                //debug
+                System.out.println("Context per slot: " + contextPerSlot);
+                System.out.println("Token length since last system prompt: " + tokenLengthSinceLastSystemPrompt);
+
                 if (tokenLengthSinceLastSystemPrompt >= contextPerSlot - contextPerSlot * 0.1) {
                     conversation.addMessage("System", conversation.getSystemPrompt(), null);
                     conversation.setTokenLengthAtLastSystemPrompt(totalTokenLength);
                     System.out.println("Injected System prompt to keep model on track");//debug
+                } else {
+                    System.out.println("No need to inject system prompt");//debug
                 }
             }
             saveToFile(conversation, getConversationSavePathFromUuid(conversation.getUuid()));
