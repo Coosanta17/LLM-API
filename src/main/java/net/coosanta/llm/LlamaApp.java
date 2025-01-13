@@ -151,14 +151,12 @@ public class LlamaApp {
 
         InferenceParameters inferenceParameters = generateInferenceParameters(titleConversation);
 
-        String rawTitle = getModelResponse(inferenceParameters)
-                .collectList()
-                .map(list -> String.join("", list))
-                .block(); // Block to get the result synchronously, this is because it will return nothing otherwise.
+        String rawTitle = model.complete(inferenceParameters);
 
+        if (rawTitle == null) throw new RuntimeException("Model failed to generate title. Null title received.");
+
+        rawTitle = rawTitle.trim();
         System.out.println(rawTitle);
-
-        assert rawTitle != null; // ask ide why this is here.
 
         String cookedTitle;
 
@@ -170,7 +168,7 @@ public class LlamaApp {
             // Serve it raw
             cookedTitle = rawTitle;
         }
-        return cookedTitle;
+        return cookedTitle.trim();
     }
 
     // How to make this not bound to LlamaApp class??

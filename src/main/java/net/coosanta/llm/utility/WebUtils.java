@@ -80,7 +80,7 @@ public class WebUtils {
             futureTitle.thenAccept(generatedTitle -> {
                 try {
                     emitter.send(SseEmitter.event()
-                            .name("title").data(generatedTitle.trim()));
+                            .name("title").data(generatedTitle));
                     emitter.complete();
                 } catch (IOException e) {
                     emitter.completeWithError(e);
