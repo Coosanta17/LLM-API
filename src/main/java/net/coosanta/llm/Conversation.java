@@ -104,6 +104,7 @@ public class Conversation {
     }
 
     public void setTotalTokenLength(int totalTokenLength) {
+        System.out.println("Setting total token length in conversation object");
         this.totalTokenLength = totalTokenLength;
     }
 
