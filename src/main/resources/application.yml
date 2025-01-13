@@ -85,7 +85,9 @@ app:
     # remember more of the conversation but will use more RAM.
     # Llama.cpp default 512 (model might be a bit forgetful and will struggle on long responses).
     # Set to 0 to load model default (might use too much ram)
-    context: 700
+    # Parallel sequences will equally divide context between each other.
+    # For example, 1000 context shared among 4 parallel sequences will be 250 context per slot.
+    context: 1400
 
     # Whether to keep the first message in the conversation.
     # Useful if the first message is a system prompt.
