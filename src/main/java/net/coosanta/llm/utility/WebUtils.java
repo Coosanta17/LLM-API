@@ -30,23 +30,27 @@ public class WebUtils {
 
     public static @NotNull Runnable closeChatStream(
             ScheduledExecutorService scheduler,
-            Conversation finalConversation,
+            Conversation conversation,
             Disposable disposable,
-            String modelResponseString) {
+            StringBuffer modelResponse) {
 
         return () -> {
             scheduler.close();
             disposable.dispose();
-            if (llamaConfig.isSaveCompletionConversations() && finalConversation != null) {
-                finalConversation.addMessage("Assistant", modelResponseString, null);
-                try {
-                    saveToFile(finalConversation, getConversationSavePathFromUuid(finalConversation.getUuid()));
-                } catch (IOException e) {
-                    System.err.println("Failed to save conversation");
-                    throw new RuntimeException(e);
-                }
+            if (llamaConfig.isSaveCompletionConversations() && conversation != null) {
+                saveCompletionConversation(conversation, modelResponse);
             }
         };
+    }
+
+    private static void saveCompletionConversation(Conversation conversation, StringBuffer modelResponse) {
+        conversation.addMessage("Assistant", modelResponse.toString(), null);
+        try {
+            saveToFile(conversation, getConversationSavePathFromUuid(conversation.getUuid()));
+        } catch (IOException e) {
+            System.err.println("Failed to save conversation");
+            throw new RuntimeException(e);
+        }
     }
 
     public static void streamResponse(String data, SseEmitter emitter, StringBuffer modelResponseString) {

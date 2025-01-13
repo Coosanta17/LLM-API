@@ -93,16 +93,14 @@ public class LlmController {
             ping(scheduler, emitter);
 
             // Send response stream
-            Conversation finalConversation = conversation;
+
             Disposable subscription = response.subscribe(
                     data -> streamResponse(data, emitter, modelResponse),
                     emitter::completeWithError,
                     emitter::complete
             );
 
-            String modelResponseString = modelResponse.toString();
-            System.out.println("Model response: " + modelResponseString); // debug
-            emitter.onCompletion(closeChatStream(scheduler, finalConversation, subscription, modelResponseString));
+            emitter.onCompletion(closeChatStream(scheduler, conversation, subscription, modelResponse));
 
             emitter.onTimeout(() -> {
                 if (!subscription.isDisposed()) {
