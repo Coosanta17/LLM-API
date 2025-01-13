@@ -39,6 +39,47 @@ class ConversationUtilsTests {
         assertEquals(expectedContext, context);
     }
 
+    // Testing no System Prompt
+    @Test
+    void testGenerateContextWithoutSystemPrompt() {
+        Conversation conversation = new Conversation();
+        conversation.addMessage("User", "Hello!", null);
+        conversation.addMessage("Assistant", "Hi there!", null);
+
+        String context = generateContext(conversation);
+
+        String expectedContext = """
+                <|start_header_id|>User<|end_header_id|>
+                
+                Hello!<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
+                
+                Hi there!<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
+                
+                """;
+        assertEquals(expectedContext, context);
+    }
+
+    // Testing empty System Prompt
+    @Test
+    void testGenerateContextWithEmptySystemPrompt() {
+        Conversation conversation = new Conversation();
+        conversation.setSystemPrompt("");
+        conversation.addMessage("User", "Hello!", null);
+        conversation.addMessage("Assistant", "Hi there!", null);
+
+        String context = generateContext(conversation);
+
+        String expectedContext = """
+                <|start_header_id|>User<|end_header_id|>
+                
+                Hello!<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
+                
+                Hi there!<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
+                
+                """;
+        assertEquals(expectedContext, context);
+    }
+
     // Testing small conversation
     @Test
     void testGenerateContextWithMessages() {
@@ -51,15 +92,15 @@ class ConversationUtilsTests {
         String context = generateContext(conversation);
 
         String expectedContext = """
-                <|start_header_id|>System<|end_header_id|>
-                
-                This is a system prompt.<|eot_id|><|start_header_id|>User<|end_header_id|>
+                <|start_header_id|>User<|end_header_id|>
                 
                 Hello!<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
                 
                 Hi there!<|eot_id|><|start_header_id|>User<|end_header_id|>
                 
-                mmmMMMMMmmmmMMMm m <|eot_id|><|start_header_id|>Assistant<|end_header_id|>
+                mmmMMMMMmmmmMMMm m <|eot_id|><|start_header_id|>System<|end_header_id|>
+                
+                This is a system prompt.<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
                 
                 """;
         assertEquals(expectedContext, context);
@@ -77,11 +118,11 @@ class ConversationUtilsTests {
         String context = generateContext(conversation);
 
         String expectedContext = """
-                <|start_header_id|>System<|end_header_id|>
+                <|start_header_id|>User<|end_header_id|>
                 
-                This is a system prompt.<|eot_id|><|start_header_id|>User<|end_header_id|>
+                Hello!<|eot_id|><|start_header_id|>System<|end_header_id|>
                 
-                Hello!<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
+                This is a system prompt.<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
                 
                 """;
         assertEquals(expectedContext, context);
@@ -119,9 +160,7 @@ class ConversationUtilsTests {
         String context = generateContext(conversation);
 
         String expectedContext = """
-                <|start_header_id|>System<|end_header_id|>
-                
-                This is a system prompt.<|eot_id|><|start_header_id|>User<|end_header_id|>
+                <|start_header_id|>User<|end_header_id|>
                 
                 Hello!<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
                 
@@ -156,7 +195,9 @@ class ConversationUtilsTests {
                 
                 Thank you.<|eot_id|><|start_header_id|>User<|end_header_id|>
                 
-                Goodbye!<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
+                Goodbye!<|eot_id|><|start_header_id|>System<|end_header_id|>
+                
+                This is a system prompt.<|eot_id|><|start_header_id|>Assistant<|end_header_id|>
                 
                 """;
         assertEquals(expectedContext, context);

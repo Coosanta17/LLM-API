@@ -30,11 +30,9 @@ public class ConversationUtils {
     }
 
     public static void saveToFile(Conversation conversation, Path filePath) throws IOException {
-        System.out.println("Saving conversation to file...");//debug
         Files.createDirectories(filePath.getParent());
         String json = toJson(conversation);
         Files.writeString(filePath, json);
-        System.out.println("Saved conversation to file!");//debug
     }
 
     public static Conversation loadFromFile(Path filePath) throws IOException {
@@ -55,8 +53,11 @@ public class ConversationUtils {
             generatedContext.append(formatMessage(message.getRole(), message.getContent()));
         }
 
-        // Adds system prompt to context
-        generatedContext.append(formatMessage("System", conversation.getSystemPrompt()));
+        // Adds system prompt to context if not null or empty. Adds it last to prevent model from forgetting it.
+        String systemPrompt = conversation.getSystemPrompt();
+        if (!(systemPrompt == null || Objects.equals(systemPrompt, ""))) {
+            generatedContext.append(formatMessage("System", systemPrompt));
+        }
 
         // Add Model prompt
         generatedContext.append("<|start_header_id|>Assistant<|end_header_id|>\n\n");
