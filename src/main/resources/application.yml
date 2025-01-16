@@ -89,6 +89,10 @@ app:
     # For example, 1000 context shared among 4 parallel sequences will be 250 context per slot.
     context: 1024
 
+    # How many prompt tokens one batch is. If the prompt is 8 tokens with a batch size of 4 it will
+    # process as 2 batches of 4.
+    batch-size: 256
+
     # How many token the model generates each response.
     # It is not recommended to have the number higher than context as this can result
     # in weird responses (endless repetition of the same token)
@@ -97,8 +101,8 @@ app:
     response-limit: 400
 
     # How many threads the model uses. The more threads the faster
-    # the model responds. However, this can result in other
-    # applications being impacted due to less resources.
+    # the model responds (not always true, see https://github.com/ggerganov/llama.cpp/blob/master/docs/development/token_generation_performance_tips.md).
+    # However, this can result in other applications being impacted due to less resources.
     threads: 4
 
     # How many concurrent completions the model can do.
@@ -109,6 +113,8 @@ app:
     parallel-sequences: 2
 
     # Set the number of layers to store in VRAM (use default: -1)
+    # * You need to compile this yourself if you want GPU offloading.
+    # See https://github.com/kherud/java-llama.cpp?tab=readme-ov-file#setup-required
     gpu-layers: -1
 
     # Time in minutes after last activity before the model unloads from memory.
@@ -126,8 +132,3 @@ app:
     # If you want the model to stay loaded for the entirety of the application's
     # lifecycle, set this to true and `inactivity-timeout` to -1.
     load-on-start: false
-
-    # At what level of fragmentation of KV cache does the model defragment it.
-    # Especially useful with many parallel sequences as the context KV cache can get fragmented.
-    # (KV cache is the cache of what the model has generated to make a completion properly and with context).
-    defragmentation-threshold: 5

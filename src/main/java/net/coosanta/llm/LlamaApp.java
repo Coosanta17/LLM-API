@@ -212,7 +212,7 @@ public class LlamaApp {
                 .setNThreads(modelSettings.getThreads())
                 .setNPredict(modelSettings.getResponseLimit())
                 .setNParallel(modelSettings.getParallelSequences())
-                .setDefragmentationThreshold(modelSettings.getDefragmentationThreshold());
+                .setNBatch(modelSettings.getBatchSize());
 
         return new LlamaModel(modelParams);
     }

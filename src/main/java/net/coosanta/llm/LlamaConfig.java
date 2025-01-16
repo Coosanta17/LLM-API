@@ -68,13 +68,13 @@ public class LlamaConfig {
     public static class ModelConfig {
         private String path;
         private int context;
+        private int batchSize;
         private int responseLimit;
         private int threads;
         private int parallelSequences;
         private int gpuLayers;
         private int inactivityTimeout;
         private boolean loadOnStart;
-        private float defragmentationThreshold;
 
         public String getPath() {
             return this.path;
@@ -90,6 +90,14 @@ public class LlamaConfig {
 
         public void setContext(int context) {
             this.context = context;
+        }
+
+        public int getBatchSize() {
+            return this.batchSize;
+        }
+
+        public void setBatchSize(int batchSize) {
+            this.batchSize = batchSize;
         }
 
         public int getResponseLimit() {
@@ -140,13 +148,6 @@ public class LlamaConfig {
             this.loadOnStart = loadOnStart;
         }
 
-        public float getDefragmentationThreshold() {
-            return this.defragmentationThreshold;
-        }
-
-        public void setDefragmentationThreshold(float defragmentationThreshold) {
-            this.defragmentationThreshold = defragmentationThreshold;
-        }
     }
 
     public ModelConfig getModelSettings() {
