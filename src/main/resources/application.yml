@@ -91,7 +91,7 @@ app:
 
     # How many prompt tokens one batch is. If the prompt is 8 tokens with a batch size of 4 it will
     # process as 2 batches of 4.
-    batch-size: 256
+    batch-size: 512
 
     # How many token the model generates each response.
     # It is not recommended to have the number higher than context as this can result
