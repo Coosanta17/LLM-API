@@ -1,4 +1,4 @@
-# Llama.cpp SSE API (bad)
+# Llama.cpp SSE API
 
 > *API backend for locally hosted Large Language Models written in Java using llama.cpp*
 
