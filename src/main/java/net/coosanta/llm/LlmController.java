@@ -37,6 +37,7 @@ public class LlmController {
         }
     }
 
+    // curl -X GET http://localhost:8080/api/v1/check
     @GetMapping("/check")
     public ResponseEntity<Void> checkOnline() {
         return ResponseEntity.ok().build();
