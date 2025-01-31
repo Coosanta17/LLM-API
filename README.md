@@ -48,7 +48,7 @@ You can see an example of the model in action [here](https://chat.coosanta.net) 
 ```
 
 ## API Routes
-### GET - `/api/v1/check`
+### `/api/v1/check` - GET
 
 *to check if api is online*
 
@@ -57,7 +57,7 @@ You can see an example of the model in action [here](https://chat.coosanta.net) 
 200 - OK
 ```
 
-### POST - `/api/v1/complete`
+### `/api/v1/complete` - POST
 
 *sends prompt and returns the model completion as server-sent events*
 
@@ -103,7 +103,7 @@ data:
 data:
 ```
 
-### POST - `/api/v1/completion-title`
+### `/api/v1/completion-title` - POST
 *Generates a title based on input conversation*
 
 **Example request:**
