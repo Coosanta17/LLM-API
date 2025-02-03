@@ -2,7 +2,7 @@
 
 > *API backend for locally hosted Large Language Models written in Java using llama.cpp*
 
-This is a project that I made to learn more about APIs and LLMs. Due to the project being a learning journey, there are some issues and inefficiencies that exist. If you would like to use a fully functional API that uses OpenAI's system look at [llama-server](https://github.com/ggerganov/llama.cpp) REST API.
+This is a project that I made to learn more about APIs and LLMs. Due to the project being a learning journey, there are some issues and inefficiencies that exist. If you would like to use a fully functional, reliable and "bug free" API that uses OpenAI's system look at [llama-server](https://github.com/ggerganov/llama.cpp) REST API.
 
 ## How it works
 
@@ -231,7 +231,11 @@ event:ping
 event:title
 data:Black Hole Investigation
 ```
+<br />
 
+***
 
+<br />
+<br />
 
 That's all for now. If you find any errors anywhere please feel free to create an [issue](https://github.com/Coosanta17/LLM-API/issues/).
