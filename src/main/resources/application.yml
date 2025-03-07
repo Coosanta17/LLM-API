@@ -59,8 +59,6 @@ app:
   conversation-path: ./conversations/
 
   # Whether to save completion conversations
-  # this is so you can access conversations sent in by completions in the conversation interface as well
-  # Confused? So am I.
   # Potentially large and excess conversations in conversations so only use if necessary.
   save-completion-conversations: true
 
