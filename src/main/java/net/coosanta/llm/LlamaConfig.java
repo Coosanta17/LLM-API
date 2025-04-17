@@ -3,6 +3,9 @@ package net.coosanta.llm;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Component
 @ConfigurationProperties(prefix = "app")
 public class LlamaConfig {
@@ -65,6 +68,14 @@ public class LlamaConfig {
     }
 
 
+    public ModelConfig getModelSettings() {
+        return model;
+    }
+
+    public void setModel(ModelConfig model) {
+        this.model = model;
+    }
+
     public static class ModelConfig {
         private String path;
         private int context;
@@ -75,6 +86,7 @@ public class LlamaConfig {
         private int gpuLayers;
         private int inactivityTimeout;
         private boolean loadOnStart;
+        private Map<String, Float> loraAdapters = new HashMap<>();
 
         public String getPath() {
             return this.path;
@@ -148,13 +160,12 @@ public class LlamaConfig {
             this.loadOnStart = loadOnStart;
         }
 
-    }
+        public Map<String, Float> getLoraAdapters() {
+            return this.loraAdapters;
+        }
 
-    public ModelConfig getModelSettings() {
-        return model;
-    }
-
-    public void setModel(ModelConfig model) {
-        this.model = model;
+        public void setLoraAdapters(Map<String, Float> loraAdapters) {
+            this.loraAdapters = loraAdapters;
+        }
     }
 }
