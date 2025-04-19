@@ -175,6 +175,11 @@ public class LlamaApp {
         return cookedTitle.trim();
     }
 
+    public String noStreamInference(String prompt) {
+        InferenceParameters inferenceParameters = generateStringInferenceParameters(prompt);
+        return model.complete(inferenceParameters);
+    }
+
     // How to make this not bound to LlamaApp class??
     public int calculateTokenLength(String formattedInput) {
         if (!isModelLoaded()) {
@@ -231,7 +236,7 @@ public class LlamaApp {
                 .setTemperature(0.7f)
                 .setPenalizeNl(true)
                 .setMiroStat(MiroStat.V2)
-                .setStopStrings("<|eot_id|>");
+                .setStopStrings("<|eot_id|>", "<|end_of_text|>");
     }
 
     public void setIgnoreMessage(Conversation conversation, int messageIndex, boolean ignored) throws IOException {
