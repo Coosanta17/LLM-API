@@ -134,5 +134,5 @@ app:
     # Lora adaptors if any. The key is the file path, the value is the scale.
     # They must be in gguf format. To convert use llama.cpp conversion scripts.
     lora-adapters:
-      #/path/to/adapter1.gguf: 1.0
+      ./models/lora_finetuned_final_1.gguf: 1.0
       #/path/two/adapter2.gguf: 8.0
