@@ -76,7 +76,7 @@ app:
 
   model:
     # Path to the gguf file relative to project root. Uses placeholder llama.gguf for now.
-    path: ./models/llama.gguf
+    path: ./models/Llama-3.2-3B.gguf
 
     # How much context the model can store in tokens.
     # Higher number will result in the model being able to
