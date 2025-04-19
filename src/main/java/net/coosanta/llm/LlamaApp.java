@@ -176,6 +176,7 @@ public class LlamaApp {
     }
 
     public String noStreamInference(String prompt) {
+        loadModel();
         InferenceParameters inferenceParameters = generateStringInferenceParameters(prompt);
         return model.complete(inferenceParameters);
     }
