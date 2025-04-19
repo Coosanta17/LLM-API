@@ -8,10 +8,7 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import static net.coosanta.llm.utility.ConversationUtils.*;
 import static net.coosanta.llm.utility.WebUtils.*;
@@ -110,7 +107,7 @@ public class LlmController {
                 e.printStackTrace();
                 throw new RuntimeException("Failed to complete inference", e);
             }
-        });
+        }).orTimeout(5, TimeUnit.MINUTES);
     }
 
     // Bash: curl -X POST -H "Content-Type: application/json" -d '{"systemPrompt":"your-system-prompt","messages":[{"role":"User","content":"your-message"}, {"role":"Assistant","content":"response-message"}]}' "http://localhost:8080/api/v1/completion-title"
