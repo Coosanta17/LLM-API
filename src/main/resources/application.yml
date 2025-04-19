@@ -3,6 +3,8 @@ server:
   port: 8080
 
   forward-headers-strategy: native
+  tomcat:
+    connection-timeout: 600000
 
   # HTTP redirect. Not necessary but I include it here anyway. Uncomment to use of course.
 #  tomcat:
@@ -33,6 +35,8 @@ cors:
 spring:
   mvc:
     dispatch-options-request: true
+    async:
+      request-timeout: 600000
   application:
     name: LLM-API
 

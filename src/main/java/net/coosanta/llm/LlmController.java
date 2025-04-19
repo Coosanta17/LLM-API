@@ -107,7 +107,7 @@ public class LlmController {
                 e.printStackTrace();
                 throw new RuntimeException("Failed to complete inference", e);
             }
-        }).orTimeout(5, TimeUnit.MINUTES);
+        }).orTimeout(10, TimeUnit.MINUTES);
     }
 
     // Bash: curl -X POST -H "Content-Type: application/json" -d '{"systemPrompt":"your-system-prompt","messages":[{"role":"User","content":"your-message"}, {"role":"Assistant","content":"response-message"}]}' "http://localhost:8080/api/v1/completion-title"
